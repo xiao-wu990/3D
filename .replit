@@ -1,0 +1,9 @@
+{
+  "$schema": "https://replit.com/@replit/schemas/v3/config.latest",
+  "clientId": "...",
+  "replit": {
+    "nix": {
+      "packages": ["nodejs-20_x"]
+    }
+  }
+}

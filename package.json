@@ -1,0 +1,27 @@
+{
+  "name": "lan-file-transfer",
+  "version": "1.0.0",
+  "description": "局域网文件传输工具 - 支持发送端和接收端双向传输",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "file-transfer",
+    "lan",
+    "websocket",
+    "p2p"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2",
+    "qrcode": "^1.5.3",
+    "multer": "^1.4.5-lts.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

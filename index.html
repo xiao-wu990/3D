@@ -497,6 +497,149 @@
       border-left: 4px solid #dc3545;
     }
 
+    .chat-section {
+      margin-top: 30px;
+      padding: 20px;
+      background: var(--info-bg);
+      border-radius: 16px;
+      animation: slideIn 0.4s ease-out;
+    }
+
+    .chat-messages {
+      min-height: 200px;
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 15px;
+      background: var(--container-bg);
+      border-radius: 12px;
+      margin-bottom: 15px;
+      border: 2px solid var(--input-border);
+    }
+
+    .chat-message {
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      border-radius: 12px;
+      max-width: 80%;
+      word-wrap: break-word;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .chat-message.sent {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      margin-left: auto;
+      text-align: right;
+    }
+
+    .chat-message.received {
+      background: var(--file-area-bg);
+      color: var(--text-primary);
+      margin-right: auto;
+    }
+
+    .chat-message .sender {
+      font-size: 12px;
+      opacity: 0.8;
+      margin-bottom: 4px;
+    }
+
+    .chat-message .time {
+      font-size: 11px;
+      opacity: 0.6;
+      margin-top: 4px;
+    }
+
+    .chat-input-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .chat-input-group input {
+      flex: 1;
+      padding: 16px 20px;
+      border: 3px solid var(--input-border);
+      border-radius: 12px;
+      font-size: 18px;
+      background: var(--input-bg);
+      color: var(--text-primary);
+      transition: all 0.3s;
+    }
+
+    .chat-input-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      background: var(--container-bg);
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+
+    .chat-input-group input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .mic-section {
+      margin-top: 30px;
+      padding: 20px;
+      background: var(--info-bg);
+      border-radius: 16px;
+      animation: slideIn 0.4s ease-out;
+    }
+
+    .mic-buttons {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .mic-btn {
+      padding: 20px 40px;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 200px;
+      justify-content: center;
+    }
+
+    .mic-btn.idle {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .mic-btn.idle:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+    }
+
+    .mic-btn.active {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+      animation: pulse 2s infinite;
+    }
+
+    .mic-btn.active:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(220, 53, 69, 0.5);
+    }
+
+    .mic-status.recording {
+      background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+      color: #155724;
+    }
+
+    .mic-status.error {
+      background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+      color: #721c24;
+    }
+
     .call-controls {
       margin-top: 30px;
       padding: 20px;
@@ -1178,7 +1321,16 @@
         if (data.type === 'file') {
           handleFile(data);
         } else if (data.type === 'message') {
-          showStatus('💬 对方消息: ' + data.message, 'connected');
+          // 处理聊天消息
+          addChatMessage(data.message, 'received', data.sender || '匿名用户');
+          showStatus('💬 收到新消息', 'connected');
+          // 移动端震动提示
+          if (navigator.vibrate) {
+            navigator.vibrate(200);
+          }
+        } else if (data.type === 'audio') {
+          // 处理音频数据
+          handleAudio(data.audioData);
         } else if (data.type === 'call') {
           handleIncomingCall(data);
         } else if (data.type === 'call-answer') {
@@ -1414,6 +1566,183 @@
     // 初始禁用文件上传区域
     document.getElementById('file-area').classList.add('disabled');
 
+    // ========== 聊天功能 ==========
+
+    // 发送消息
+    function sendMessage() {
+      const input = document.getElementById('chat-input');
+      const message = input.value.trim();
+
+      if (!message) return;
+
+      if (!conn || conn.open !== true) {
+        alert('请先建立连接');
+        return;
+      }
+
+      // 发送消息
+      conn.send({
+        type: 'message',
+        message: message,
+        sender: myNickname,
+        timestamp: Date.now()
+      });
+
+      // 显示发送的消息
+      addChatMessage(message, 'sent', myNickname);
+
+      // 清空输入框
+      input.value = '';
+    }
+
+    // 添加聊天消息到显示区域
+    function addChatMessage(message, type, sender) {
+      const chatMessages = document.getElementById('chat-messages');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'chat-message ' + type;
+
+      const time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+
+      messageDiv.innerHTML = `
+        ${type === 'received' ? `<div class="sender">${sender}</div>` : ''}
+        <div class="content">${escapeHtml(message)}</div>
+        <div class="time">${time}</div>
+      `;
+
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // 转义 HTML 防止 XSS
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ========== 麦克风喊话功能 ==========
+
+    // 切换麦克风
+    async function toggleMicrophone() {
+      const btn = document.getElementById('mic-toggle-btn');
+      const icon = document.getElementById('mic-btn-icon');
+      const text = document.getElementById('mic-btn-text');
+      const micStatus = document.getElementById('mic-status');
+
+      if (isMicEnabled) {
+        // 关闭麦克风
+        stopMicrophone();
+        btn.className = 'mic-btn idle';
+        icon.textContent = '🎙️';
+        text.textContent = '开启麦克风';
+        micStatus.style.display = 'none';
+        showStatus('📴 麦克风已关闭', 'connected');
+      } else {
+        // 开启麦克风
+        try {
+          showStatus('⏳ 正在请求麦克风权限...', 'connecting');
+
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const source = audioContext.createMediaStreamSource(stream);
+          analyser = audioContext.createAnalyser();
+          analyser.fftSize = 256;
+          source.connect(analyser);
+
+          mediaRecorder = new MediaRecorder(stream);
+
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0 && conn && conn.open === true) {
+              conn.send({
+                type: 'audio',
+                audioData: event.data
+              });
+            }
+          };
+
+          mediaRecorder.start(100); // 每100ms发送一次
+
+          isMicEnabled = true;
+          btn.className = 'mic-btn active';
+          icon.textContent = '🔴';
+          text.textContent = '停止麦克风';
+
+          micStatus.innerHTML = '🎙️ 麦克风已开启，正在实时传送声音...';
+          micStatus.className = 'status show recording';
+          micStatus.style.display = 'block';
+
+          showStatus('✅ 麦克风已开启，对方可以听到你的声音', 'connected');
+
+        } catch (error) {
+          console.error('无法访问麦克风:', error);
+          alert('无法访问麦克风，请检查权限设置');
+          micStatus.innerHTML = '❌ 无法访问麦克风';
+          micStatus.className = 'status show error';
+          micStatus.style.display = 'block';
+        }
+      }
+    }
+
+    // 停止麦克风
+    function stopMicrophone() {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+
+      if (mediaRecorder && mediaRecorder.stream) {
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      }
+
+      if (audioContext) {
+        audioContext.close();
+      }
+
+      mediaRecorder = null;
+      audioContext = null;
+      analyser = null;
+      isMicEnabled = false;
+    }
+
+    // 切换静音
+    function toggleMute() {
+      if (!isMicEnabled) {
+        alert('请先开启麦克风');
+        return;
+      }
+
+      isMuted = !isMuted;
+      const btn = document.getElementById('mute-btn');
+
+      if (isMuted) {
+        btn.textContent = '🔊 取消静音';
+        btn.style.background = 'linear-gradient(135deg, #ffc107 0%, #e0a800 100%)';
+        showStatus('🔇 已静音', 'connected');
+      } else {
+        btn.textContent = '🔇 静音';
+        btn.style.background = '';
+        showStatus('🔊 已取消静音', 'connected');
+      }
+    }
+
+    // 处理接收到的音频
+    function handleAudio(audioData) {
+      const audioBlob = new Blob([audioData], { type: 'audio/webm' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      if (mediaElement) {
+        mediaElement.pause();
+      }
+
+      mediaElement = new Audio(audioUrl);
+      mediaElement.play().catch(e => console.error('播放失败:', e));
+
+      // 释放 URL
+      setTimeout(() => {
+        URL.revokeObjectURL(audioUrl);
+      }, 1000);
+    }
+
     // ========== 通话功能 ==========
 
     // 开始语音通话
@@ -1603,20 +1932,23 @@
         localStream = null;
       }
 
-      if (remoteStream) {
-        remoteStream.getTracks().forEach(track => track.stop());
-        remoteStream = null;
+      // 清理所有远程流
+      for (const peerId in remoteStreams) {
+        if (remoteStreams[peerId]) {
+          remoteStreams[peerId].getTracks().forEach(track => track.stop());
+        }
       }
+      remoteStreams = {};
 
       const localVideo = document.getElementById('local-video');
-      const remoteVideo = document.getElementById('remote-video');
+      const remoteVideosGrid = document.getElementById('remote-videos-grid');
 
       if (localVideo) {
         localVideo.srcObject = null;
       }
 
-      if (remoteVideo) {
-        remoteVideo.srcObject = null;
+      if (remoteVideosGrid) {
+        remoteVideosGrid.innerHTML = '';
       }
 
       document.getElementById('video-wrapper').style.display = 'none';
@@ -1659,6 +1991,23 @@
     }
 
     // ========== 自动连接功能 ==========
+
+    // 设置昵称
+    function setNickname() {
+      const nicknameInput = document.getElementById('nickname-input');
+      const nickname = nicknameInput.value.trim();
+
+      if (!nickname) {
+        alert('请输入昵称');
+        return;
+      }
+
+      myNickname = nickname;
+      localStorage.setItem('p2p_nickname', nickname);
+      document.title = `🌍 ${nickname} - 跨地域 P2P 文件传输`;
+
+      showStatus('✅ 昵称已设置为: ' + nickname, 'connected');
+    }
 
     // 加载保存的昵称
     function loadSavedNickname() {

@@ -87,6 +87,7 @@
       max-width: 520px;
       width: 100%;
       animation: scaleIn 0.5s ease;
+      position: relative;
     }
 
     @keyframes scaleIn {
@@ -100,15 +101,40 @@
       }
     }
 
+    .setup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 32px;
+    }
+
     .setup-container h1 {
-      text-align: center;
       background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin-bottom: 32px;
       font-size: 2.5rem;
       font-weight: 800;
+      margin: 0;
+    }
+
+    .theme-toggle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      border: none;
+      cursor: pointer;
+      font-size: 24px;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .theme-toggle:hover {
+      transform: rotate(180deg);
+      background: var(--accent-primary);
     }
 
     .form-group {
@@ -141,6 +167,43 @@
       border-color: var(--accent-primary);
       box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
       transform: translateY(-2px);
+    }
+
+    .device-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .device-option {
+      padding: 20px 10px;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      cursor: pointer;
+      text-align: center;
+      transition: var(--transition);
+      background: var(--bg-primary);
+    }
+
+    .device-option:hover {
+      border-color: var(--accent-primary);
+      transform: translateY(-2px);
+    }
+
+    .device-option.selected {
+      border-color: var(--accent-primary);
+      background: rgba(102, 126, 234, 0.1);
+    }
+
+    .device-option .icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .device-option .label {
+      font-weight: 600;
+      font-size: 14px;
     }
 
     .role-selector {
@@ -302,7 +365,7 @@
       transform: translateY(-2px);
     }
 
-    .theme-toggle {
+    .theme-toggle-small {
       width: 44px;
       height: 44px;
       border-radius: 50%;
@@ -316,7 +379,7 @@
       justify-content: center;
     }
 
-    .theme-toggle:hover {
+    .theme-toggle-small:hover {
       transform: rotate(180deg);
       background: var(--accent-primary);
     }
@@ -391,10 +454,10 @@
     }
 
     .connection-code-display .code {
-      font-size: 18px;
+      font-size: 24px;
       font-weight: 700;
       color: var(--accent-primary);
-      letter-spacing: 2px;
+      letter-spacing: 4px;
       cursor: pointer;
       user-select: all;
     }
@@ -1010,6 +1073,10 @@
       .logo {
         font-size: 20px;
       }
+
+      .device-selector {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (min-width: 769px) {
@@ -1102,15 +1169,38 @@
   <!-- 初始化界面 -->
   <div id="setup-screen">
     <div class="setup-container">
-      <h1>P2P实时通信</h1>
+      <div class="setup-header">
+        <h1>P2P实时通信</h1>
+        <button class="theme-toggle" onclick="toggleTheme()">
+          <span id="setup-theme-icon">🌙</span>
+        </button>
+      </div>
+
+      <div class="form-group">
+        <label>设备类型</label>
+        <div class="device-selector">
+          <div class="device-option" data-device="phone" onclick="selectDevice('phone')">
+            <div class="icon">📱</div>
+            <div class="label">手机</div>
+          </div>
+          <div class="device-option" data-device="tablet" onclick="selectDevice('tablet')">
+            <div class="icon">📱</div>
+            <div class="label">平板</div>
+          </div>
+          <div class="device-option" data-device="pc" onclick="selectDevice('pc')">
+            <div class="icon">💻</div>
+            <div class="label">电脑</div>
+          </div>
+        </div>
+      </div>
 
       <div class="role-selector">
         <div class="role-option" data-role="sender" onclick="selectRole('sender')">
-          <div class="icon">💻</div>
+          <div class="icon">📤</div>
           <div class="label">发送端</div>
         </div>
         <div class="role-option" data-role="receiver" onclick="selectRole('receiver')">
-          <div class="icon">📱</div>
+          <div class="icon">📥</div>
           <div class="label">接收端</div>
         </div>
       </div>
@@ -1159,7 +1249,7 @@
       <div class="header-right">
         <button class="header-btn" onclick="showQRCode()">📱 二维码</button>
         <button class="header-btn" onclick="showContactInfo()">💬 联系</button>
-        <button class="theme-toggle" onclick="toggleTheme()" title="切换主题">
+        <button class="theme-toggle-small" onclick="toggleTheme()">
           <span id="theme-icon">🌙</span>
         </button>
       </div>
@@ -1301,6 +1391,7 @@
 
   <script>
     // 全局变量
+    let myDevice = 'phone';
     let myRole = 'sender';
     let myNickname = '';
     let myConnectionCode = '';
@@ -1323,6 +1414,24 @@
         { urls: 'stun:stun1.l.google.com:19302' }
       ]
     };
+
+    // 设备类型映射
+    const deviceLabels = {
+      phone: '手机',
+      tablet: '平板',
+      pc: '电脑'
+    };
+
+    // 选择设备类型
+    function selectDevice(device) {
+      myDevice = device;
+      document.querySelectorAll('.device-option').forEach(el => {
+        el.classList.remove('selected');
+        if (el.dataset.device === device) {
+          el.classList.add('selected');
+        }
+      });
+    }
 
     // 选择角色
     function selectRole(role) {
@@ -1349,6 +1458,7 @@
       // 保存到本地存储
       localStorage.setItem('nickname', nickname);
       localStorage.setItem('role', myRole);
+      localStorage.setItem('device', myDevice);
       localStorage.setItem('theme', document.documentElement.getAttribute('data-theme') || 'light');
 
       // 切换到主界面
@@ -1356,8 +1466,10 @@
       document.getElementById('main-screen').style.display = 'block';
 
       // 更新用户信息显示
+      const deviceLabel = deviceLabels[myDevice] || myDevice;
+      const roleLabel = myRole === 'sender' ? '发送端' : '接收端';
       document.getElementById('display-nickname').textContent = nickname;
-      document.getElementById('display-role').textContent = myRole === 'sender' ? '发送端' : '接收端';
+      document.getElementById('display-role').textContent = `${deviceLabel} · ${roleLabel}`;
       document.getElementById('user-avatar').textContent = nickname.charAt(0).toUpperCase();
 
       // 生成连接码
@@ -1371,9 +1483,9 @@
 
     // 生成连接码
     function generateConnectionCode() {
-      const timestamp = Date.now().toString(36);
-      const random = Math.random().toString(36).substring(2, 8);
-      myConnectionCode = `${myRole.substring(0, 1).toUpperCase()}-${timestamp}-${random}`.toUpperCase();
+      const timestamp = Date.now().toString(36).substring(0, 4);
+      const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+      myConnectionCode = random + timestamp;
 
       document.getElementById('my-connection-code').textContent = myConnectionCode;
       document.getElementById('connection-code-display').style.display = 'block';
@@ -1404,7 +1516,6 @@
         return;
       }
 
-      // 模拟连接
       connectToDevice(code);
       closeCodeModal();
       document.getElementById('connection-code-input').value = '';
@@ -1424,14 +1535,14 @@
         return;
       }
 
-      // 模拟连接成功
       connectedDevices[deviceId] = {
         id: deviceId,
-        nickname: `设备 ${deviceId.substring(0, 8)}`,
-        connectedAt: new Date().toISOString()
+        nickname: `设备 ${deviceId.substring(0, 6)}`,
+        connectedAt: new Date().toISOString(),
+        online: true
       };
 
-      showToast(`已连接到设备 ${deviceId.substring(0, 8)}`);
+      showToast(`已连接到设备 ${deviceId.substring(0, 6)}`);
       updateDeviceList();
 
       if (!currentChatDeviceId) {
@@ -1460,8 +1571,8 @@
              onclick="selectDevice('${device.id}')">
           <div class="device-name">${device.nickname}</div>
           <div class="device-status">
-            <span class="status-dot online"></span>
-            已连接
+            <span class="status-dot ${device.online ? 'online' : ''}"></span>
+            ${device.online ? '已连接' : '未连接'}
           </div>
           <div class="device-actions">
             <button class="device-action-btn disconnect" onclick="event.stopPropagation(); disconnectDevice('${device.id}')">断开</button>
@@ -1477,7 +1588,6 @@
       document.getElementById('current-chat-title').textContent = device ? device.nickname : '选择设备开始聊天';
       updateDeviceList();
 
-      // 显示该设备的消息
       displayMessages(deviceId);
     }
 
@@ -1518,6 +1628,7 @@
         if (currentChatDeviceId === deviceId) {
           currentChatDeviceId = null;
           document.getElementById('current-chat-title').textContent = '选择设备开始聊天';
+          const messagesContainer = document.getElementById('messages');
           messagesContainer.innerHTML = `
             <div class="empty-state">
               <div class="icon">💬</div>
@@ -1559,20 +1670,7 @@
       displayMessages(currentChatDeviceId);
       messageInput.value = '';
 
-      // 模拟接收回复(仅用于演示)
-      setTimeout(() => {
-        const replyData = {
-          deviceId: currentChatDeviceId,
-          content: '收到消息: ' + message,
-          sender: connectedDevices[currentChatDeviceId].nickname,
-          sent: false,
-          time: new Date().toLocaleTimeString()
-        };
-        messages.push(replyData);
-        if (currentChatDeviceId) {
-          displayMessages(currentChatDeviceId);
-        }
-      }, 1000);
+      showToast('消息已发送');
     }
 
     // HTML转义
@@ -1650,7 +1748,6 @@
           document.getElementById('mic-btn').classList.add('active');
           showToast('麦克风已启用');
 
-          // 模拟发送语音消息
           const voiceMsg = {
             deviceId: currentChatDeviceId,
             content: '🎤 语音消息',
@@ -1762,7 +1859,6 @@
 
         document.getElementById('call-screen').classList.add('active');
 
-        // 模拟对方接听
         setTimeout(() => {
           document.getElementById('remote-video').srcObject = localStream;
         }, 2000);
@@ -1810,7 +1906,7 @@
           videoTrack.enabled = !isCameraOff;
           const btn = document.getElementById('camera-btn');
           btn.classList.toggle('active', isCameraOff);
-          btn.textContent = isCameraOff ? '📷 开启摄像头' : '📷 关闭摄像头';
+          btn.textContent = isMuted ? '📷 开启摄像头' : '📷 关闭摄像头';
         }
       }
     }
@@ -1847,8 +1943,11 @@
 
     // 更新主题图标
     function updateThemeIcon(theme) {
-      const icon = document.getElementById('theme-icon');
-      icon.textContent = theme === 'light' ? '🌙' : '☀️';
+      const setupIcon = document.getElementById('setup-theme-icon');
+      const headerIcon = document.getElementById('theme-icon');
+      const icon = theme === 'light' ? '🌙' : '☀️';
+      if (setupIcon) setupIcon.textContent = icon;
+      if (headerIcon) headerIcon.textContent = icon;
     }
 
     // 显示提示
@@ -1899,6 +1998,7 @@
     window.addEventListener('load', () => {
       const savedNickname = localStorage.getItem('nickname');
       const savedRole = localStorage.getItem('role');
+      const savedDevice = localStorage.getItem('device');
 
       if (savedNickname) {
         document.getElementById('nickname').value = savedNickname;
@@ -1906,6 +2006,16 @@
 
       if (savedRole) {
         selectRole(savedRole);
+      }
+
+      if (savedDevice) {
+        selectDevice(savedDevice);
+      }
+
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
       }
     });
 

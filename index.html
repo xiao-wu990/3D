@@ -482,6 +482,7 @@
       transition: var(--transition);
       border: 2px solid transparent;
       animation: slideIn 0.3s ease;
+      position: relative;
     }
 
     @keyframes slideIn {
@@ -505,10 +506,31 @@
       background: rgba(102, 126, 234, 0.1);
     }
 
+    .device-item.has-unread::after {
+      content: '';
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 10px;
+      height: 10px;
+      background: var(--accent-danger);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
     .device-name {
       font-weight: 700;
       margin-bottom: 8px;
       color: var(--text-primary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .device-name .alias {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 400;
     }
 
     .device-status {
@@ -559,6 +581,11 @@
 
     .device-action-btn.disconnect {
       background: var(--accent-danger);
+      color: white;
+    }
+
+    .device-action-btn.alias {
+      background: var(--accent-primary);
       color: white;
     }
 
@@ -650,6 +677,52 @@
       font-weight: 600;
       margin-bottom: 6px;
       color: var(--text-secondary);
+    }
+
+    /* 文件消息样式 */
+    .file-message {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: 10px;
+      margin-top: 8px;
+    }
+
+    .file-message .file-icon {
+      font-size: 32px;
+    }
+
+    .file-message .file-info {
+      flex: 1;
+    }
+
+    .file-message .file-name {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .file-message .file-size {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .file-message .download-btn {
+      padding: 8px 16px;
+      background: var(--accent-primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+
+    .file-message .download-btn:hover {
+      transform: scale(1.05);
     }
 
     .chat-input-area {
@@ -872,6 +945,17 @@
       }
     }
 
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+
     /* 响应式设计 */
     @media (max-width: 768px) {
       .sidebar {
@@ -1015,6 +1099,30 @@
     ::-webkit-scrollbar-thumb:hover {
       background: var(--text-muted);
     }
+
+    /* 自动连接开关 */
+    .auto-connect-option {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--bg-primary);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .auto-connect-option input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .auto-connect-option label {
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin: 0;
+    }
   </style>
 </head>
 <body>
@@ -1067,11 +1175,11 @@
       <div class="contact-info">
         <h4>联系我们</h4>
         <div class="contact-links">
-          <a href="https://github.com/xiao-wu990/wjcs/issues" target="_blank" class="contact-link">
+          <a href="javascript:void(0)" onclick="showContactModal()" class="contact-link">
             <span class="icon">👤</span>
             联系开发者
           </a>
-          <a href="#" onclick="showQQGroup()" class="contact-link">
+          <a href="https://qm.qq.com/q/t0wc7dGAGA" target="_blank" class="contact-link">
             <span class="icon">👥</span>
             加入QQ群
           </a>
@@ -1100,7 +1208,7 @@
       </div>
       <div class="header-right">
         <button class="header-btn" onclick="showQRCode()">📱 二维码</button>
-        <button class="header-btn" onclick="showContactInfo()">💬 联系</button>
+        <button class="header-btn" onclick="showContactModal()">💬 联系</button>
         <button class="theme-toggle-small" onclick="toggleTheme()">
           <span id="theme-icon">🌙</span>
         </button>
@@ -1168,6 +1276,10 @@
       <input type="text" id="connection-code-input" placeholder="请输入对方连接码"
              style="width: 100%; padding: 14px; border: 2px solid var(--border-color); border-radius: 10px;
                     font-size: 18px; text-align: center; letter-spacing: 2px; margin-bottom: 24px;">
+      <div class="auto-connect-option">
+        <input type="checkbox" id="auto-connect-checkbox">
+        <label for="auto-connect-checkbox">下次自动连接此设备</label>
+      </div>
       <div class="modal-buttons">
         <button class="modal-btn primary" onclick="connectWithCodeSubmit()">连接</button>
         <button class="modal-btn" onclick="closeCodeModal()">取消</button>
@@ -1185,22 +1297,42 @@
     </div>
   </div>
 
-  <!-- 联系信息弹窗 -->
+  <!-- 设备注名弹窗 -->
+  <div class="modal-overlay" id="alias-modal">
+    <div class="modal-content">
+      <h3>设备备注</h3>
+      <input type="text" id="alias-input" placeholder="请输入设备备注名称"
+             style="width: 100%; padding: 14px; border: 2px solid var(--border-color); border-radius: 10px;
+                    font-size: 16px; margin-bottom: 24px;">
+      <div class="modal-buttons">
+        <button class="modal-btn primary" onclick="saveAlias()">保存</button>
+        <button class="modal-btn" onclick="closeAliasModal()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 联系开发者弹窗 -->
   <div class="modal-overlay" id="contact-modal">
     <div class="modal-content">
-      <h3>联系我们</h3>
+      <h3>联系开发者</h3>
+      <p>选择一种方式联系开发者</p>
       <div style="text-align: left; margin-bottom: 24px;">
-        <a href="https://github.com/xiao-wu990/wjcs/issues" target="_blank"
+        <a href="javascript:void(0)" onclick="openWebEmail()"
            style="display: block; padding: 12px; background: var(--bg-primary); border-radius: 10px;
                   margin-bottom: 12px; text-decoration: none; color: var(--text-primary);">
-          👤 联系开发者
+          📧 网页版QQ邮箱
         </a>
-        <a href="#" onclick="showQQGroup(); return false;"
+        <a href="mailto:3530388417@qq.com"
            style="display: block; padding: 12px; background: var(--bg-primary); border-radius: 10px;
                   text-decoration: none; color: var(--text-primary);">
-          👥 加入QQ群: 123456789
+          💻 系统邮箱
         </a>
       </div>
+      <a href="https://qm.qq.com/q/t0wc7dGAGA" target="_blank"
+         style="display: block; padding: 12px; background: var(--bg-primary); border-radius: 10px;
+                margin-bottom: 24px; text-decoration: none; color: var(--text-primary);">
+        👥 加入QQ群
+      </a>
       <button class="modal-btn primary" onclick="closeContactModal()">关闭</button>
     </div>
   </div>
@@ -1215,6 +1347,10 @@
     let connections = {};
     let currentChatPeerId = null;
     let messages = {};
+    let deviceAliases = {};
+    let deviceConnectionCounts = {};
+    let currentAliasPeerId = null;
+    let unreadMessages = {};
 
     // 设备类型映射
     const deviceLabels = {
@@ -1261,6 +1397,17 @@
       localStorage.setItem('role', myRole);
       localStorage.setItem('device', myDevice);
       localStorage.setItem('theme', document.documentElement.getAttribute('data-theme') || 'light');
+
+      // 加载保存的备注和连接次数
+      const savedAliases = localStorage.getItem('deviceAliases');
+      if (savedAliases) {
+        deviceAliases = JSON.parse(savedAliases);
+      }
+
+      const savedConnectionCounts = localStorage.getItem('deviceConnectionCounts');
+      if (savedConnectionCounts) {
+        deviceConnectionCounts = JSON.parse(savedConnectionCounts);
+      }
 
       // 更新按钮状态
       const startBtn = document.getElementById('start-btn');
@@ -1341,10 +1488,16 @@
         console.log('连接已建立:', conn.peer);
         
         const peerId = conn.peer;
+        
+        // 增加连接次数
+        deviceConnectionCounts[peerId] = (deviceConnectionCounts[peerId] || 0) + 1;
+        localStorage.setItem('deviceConnectionCounts', JSON.stringify(deviceConnectionCounts));
+
         connections[peerId] = {
           conn: conn,
-          nickname: `设备 ${peerId.substring(0, 6)}`,
-          online: true
+          nickname: deviceAliases[peerId] || `设备 ${peerId.substring(0, 6)}`,
+          online: true,
+          autoConnect: false
         };
 
         updateDeviceList();
@@ -1384,6 +1537,17 @@
         messages[peerId] = [];
       }
 
+      // 标记未读消息
+      if (!unreadMessages[peerId]) {
+        unreadMessages[peerId] = 0;
+      }
+      unreadMessages[peerId]++;
+
+      // 手机震动
+      if (navigator.vibrate && myDevice === 'phone') {
+        navigator.vibrate(200);
+      }
+
       if (data.type === 'message') {
         messages[peerId].push({
           content: data.content,
@@ -1400,7 +1564,9 @@
           content: `📄 文件: ${data.fileName} (${data.fileSize})`,
           sender: data.sender,
           sent: false,
-          time: new Date().toLocaleTimeString()
+          time: new Date().toLocaleTimeString(),
+          fileData: data.fileData,
+          fileName: data.fileName
         });
 
         if (currentChatPeerId === peerId) {
@@ -1412,6 +1578,8 @@
           updateDeviceList();
         }
       }
+
+      updateDeviceList();
     }
 
     // 生成连接码
@@ -1436,11 +1604,13 @@
     // 显示连接码输入弹窗
     function connectWithCode() {
       document.getElementById('code-modal').classList.add('active');
+      document.getElementById('auto-connect-checkbox').checked = false;
     }
 
     // 提交连接码
     function connectWithCodeSubmit() {
       const code = document.getElementById('connection-code-input').value.trim();
+      const autoConnect = document.getElementById('auto-connect-checkbox').checked;
 
       if (!code) {
         showToast('请输入连接码');
@@ -1464,6 +1634,11 @@
         const conn = peer.connect(peerId, {
           reliable: true
         });
+
+        // 保存自动连接设置
+        if (autoConnect) {
+          localStorage.setItem('autoConnect_' + peerId, 'true');
+        }
 
         handleConnection(conn);
         closeCodeModal();
@@ -1508,15 +1683,20 @@
 
       deviceList.innerHTML = devices.map(device => {
         const peerId = device.conn.peer;
+        const hasUnread = unreadMessages[peerId] > 0 && currentChatPeerId !== peerId;
         return `
-          <div class="device-item ${currentChatPeerId === peerId ? 'active' : ''}"
+          <div class="device-item ${currentChatPeerId === peerId ? 'active' : ''} ${hasUnread ? 'has-unread' : ''}"
                onclick="selectDevice('${peerId}')">
-            <div class="device-name">${device.nickname}</div>
+            <div class="device-name">
+              <span>${device.nickname}</span>
+              <span class="alias">${device.alias ? `(${device.alias})` : ''}</span>
+            </div>
             <div class="device-status">
               <span class="status-dot ${device.online ? 'online' : ''}"></span>
               ${device.online ? '已连接' : '未连接'}
             </div>
             <div class="device-actions">
+              <button class="device-action-btn alias" onclick="event.stopPropagation(); showAliasModal('${peerId}')">备注</button>
               <button class="device-action-btn disconnect" onclick="event.stopPropagation(); disconnectDevice('${peerId}')">断开</button>
             </div>
           </div>
@@ -1527,6 +1707,10 @@
     // 选择设备
     function selectDevice(peerId) {
       currentChatPeerId = peerId;
+      
+      // 清除未读标记
+      unreadMessages[peerId] = 0;
+      
       const device = connections[peerId];
       document.getElementById('current-chat-title').textContent = device ? device.nickname : '选择设备开始聊天';
       updateDeviceList();
@@ -1550,17 +1734,49 @@
         return;
       }
 
-      messagesContainer.innerHTML = deviceMessages.map(msg => `
-        <div class="message ${msg.sent ? 'sent' : 'received'}">
-          <div class="message-content">
-            ${!msg.sent ? `<div class="message-sender">${msg.sender}</div>` : ''}
-            <div class="message-text">${escapeHtml(msg.content)}</div>
-            <div class="message-time">${msg.time}</div>
-          </div>
-        </div>
-      `).join('');
+      messagesContainer.innerHTML = deviceMessages.map(msg => {
+        if (msg.fileData) {
+          // 文件消息
+          return `
+            <div class="message ${msg.sent ? 'sent' : 'received'}">
+              <div class="message-content">
+                ${!msg.sent ? `<div class="message-sender">${msg.sender}</div>` : ''}
+                <div class="file-message">
+                  <span class="file-icon">📄</span>
+                  <div class="file-info">
+                    <div class="file-name">${escapeHtml(msg.fileName)}</div>
+                    <div class="file-size">${escapeHtml(msg.content)}</div>
+                  </div>
+                  <button class="download-btn" onclick="downloadFile('${escapeHtml(msg.fileName)}', '${escapeHtml(msg.fileData)}')">下载</button>
+                </div>
+                <div class="message-time">${msg.time}</div>
+              </div>
+            </div>
+          `;
+        } else {
+          // 普通消息
+          return `
+            <div class="message ${msg.sent ? 'sent' : 'received'}">
+              <div class="message-content">
+                ${!msg.sent ? `<div class="message-sender">${msg.sender}</div>` : ''}
+                <div class="message-text">${escapeHtml(msg.content)}</div>
+                <div class="message-time">${msg.time}</div>
+              </div>
+            </div>
+          `;
+        }
+      }).join('');
 
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // 下载文件
+    function downloadFile(fileName, fileData) {
+      const link = document.createElement('a');
+      link.href = 'data:application/octet-stream;base64,' + fileData;
+      link.download = fileName;
+      link.click();
+      showToast('文件已开始下载');
     }
 
     // 断开设备
@@ -1684,8 +1900,8 @@
       document.getElementById('qr-modal').classList.remove('active');
     }
 
-    // 显示联系信息
-    function showContactInfo() {
+    // 显示联系信息弹窗
+    function showContactModal() {
       document.getElementById('contact-modal').classList.add('active');
     }
 
@@ -1694,9 +1910,43 @@
       document.getElementById('contact-modal').classList.remove('active');
     }
 
-    // 显示QQ群
-    function showQQGroup() {
-      showToast('QQ群号: 123456789');
+    // 打开网页版邮箱
+    function openWebEmail() {
+      window.open('https://mail.qq.com/cgi-bin/qm_share?t=qm_mailme&email=3530388417@qq.com', '_blank');
+    }
+
+    // 显示设备注名弹窗
+    function showAliasModal(peerId) {
+      currentAliasPeerId = peerId;
+      const alias = deviceAliases[peerId] || '';
+      document.getElementById('alias-input').value = alias;
+      document.getElementById('alias-modal').classList.add('active');
+    }
+
+    // 关闭设备注名弹窗
+    function closeAliasModal() {
+      document.getElementById('alias-modal').classList.remove('active');
+      currentAliasPeerId = null;
+    }
+
+    // 保存备注
+    function saveAlias() {
+      if (!currentAliasPeerId) return;
+
+      const alias = document.getElementById('alias-input').value.trim();
+      if (alias) {
+        deviceAliases[currentAliasPeerId] = alias;
+        localStorage.setItem('deviceAliases', JSON.stringify(deviceAliases));
+        
+        if (connections[currentAliasPeerId]) {
+          connections[currentAliasPeerId].nickname = alias;
+        }
+        
+        showToast('备注已保存');
+        updateDeviceList();
+      }
+
+      closeAliasModal();
     }
 
     // 显示文件输入
@@ -1727,33 +1977,53 @@
         return;
       }
 
-      // 只发送文件信息，不发送实际文件内容(避免数据量过大)
-      try {
-        conn.send({
-          type: 'file',
-          fileName: file.name,
-          fileSize: formatFileSize(file.size),
-          sender: myNickname
-        });
+      // 读取文件并转换为base64
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const fileData = e.target.result.split(',')[1]; // 移除data:*/*;base64,前缀
 
-        if (!messages[currentChatPeerId]) {
-          messages[currentChatPeerId] = [];
+        try {
+          conn.send({
+            type: 'file',
+            fileName: file.name,
+            fileSize: formatFileSize(file.size),
+            fileData: fileData,
+            sender: myNickname
+          });
+
+          if (!messages[currentChatPeerId]) {
+            messages[currentChatPeerId] = [];
+          }
+
+          messages[currentChatPeerId].push({
+            content: `📄 已发送文件: ${file.name} (${formatFileSize(file.size)})`,
+            sender: myNickname,
+            sent: true,
+            time: new Date().toLocaleTimeString(),
+            fileName: file.name,
+            fileSize: formatFileSize(file.size)
+          });
+
+          displayMessages(currentChatPeerId);
+          showToast('文件已发送');
+
+        } catch (error) {
+          console.error('发送文件失败:', error);
+          showToast('发送失败');
         }
+      };
 
-        messages[currentChatPeerId].push({
-          content: `📄 已发送文件: ${file.name} (${formatFileSize(file.size)})`,
-          sender: myNickname,
-          sent: true,
-          time: new Date().toLocaleTimeString()
-        });
+      reader.onerror = function() {
+        showToast('文件读取失败');
+      };
 
-        displayMessages(currentChatPeerId);
-        showToast('文件信息已发送');
-
-      } catch (error) {
-        console.error('发送文件失败:', error);
-        showToast('发送失败');
+      // 限制文件大小为5MB
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('文件大小不能超过5MB');
+        return;
       }
+
+      reader.readAsDataURL(file);
     }
 
     // 格式化文件大小

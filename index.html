@@ -2353,6 +2353,9 @@
 
         // 分块发送文件数据
         let chunkIndex = 0;
+        let lastProgressUpdate = 0;
+        const PROGRESS_UPDATE_INTERVAL = 100; // 每100ms更新一次UI，避免频繁刷新
+
         function sendNextChunk() {
           if (chunkIndex >= totalChunks) {
             // 发送完成
@@ -2407,6 +2410,7 @@
           const end = Math.min(start + chunkSize, fileData.length);
           const chunk = fileData.substring(start, end);
 
+          // 发送数据块（不阻塞UI）
           targetPeerIds.forEach(targetPeerId => {
             const conn = connections[targetPeerId]?.conn;
             if (!conn || !conn.open) {
@@ -2427,22 +2431,32 @@
 
           sentChunks++;
           const progress = Math.floor((sentChunks / totalChunks) * 100);
+          const now = Date.now();
 
-          // 更新所有目标设备的进度
-          targetPeerIds.forEach(targetPeerId => {
-            const progressMsg = messages[targetPeerId].find(m => m.id === fileId);
-            if (progressMsg) {
-              progressMsg.content = `正在发送: ${file.name} (${progress}%)`;
-              progressMsg.progress = progress;
+          // 只在间隔时间内更新UI
+          if (now - lastProgressUpdate >= PROGRESS_UPDATE_INTERVAL) {
+            lastProgressUpdate = now;
+
+            // 更新所有目标设备的进度
+            targetPeerIds.forEach(targetPeerId => {
+              const progressMsg = messages[targetPeerId].find(m => m.id === fileId);
+              if (progressMsg) {
+                progressMsg.content = `正在发送: ${file.name} (${progress}%)`;
+                progressMsg.progress = progress;
+              }
+            });
+
+            if (targetPeerIds.includes(displayPeerId)) {
+              requestAnimationFrame(() => displayMessages(displayPeerId));
             }
-          });
-
-          if (targetPeerIds.includes(displayPeerId)) {
-            displayMessages(displayPeerId);
           }
 
           chunkIndex++;
-          setTimeout(sendNextChunk, 10); // 短暂延迟避免阻塞
+
+          // 使用 requestAnimationFrame 避免阻塞UI
+          requestAnimationFrame(() => {
+            setTimeout(() => sendNextChunk(), 5);
+          });
         }
 
         sendNextChunk();

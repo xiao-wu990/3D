@@ -787,6 +787,35 @@
       box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.5);
     }
 
+    /* 发送进度样式 */
+    .file-progress {
+      margin-top: 8px;
+      padding: 8px;
+      background: var(--bg-tertiary);
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--border-color);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+      transition: width 0.3s ease;
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+
     .chat-input-area {
       padding: 20px 24px;
       background: var(--bg-secondary);
@@ -1498,6 +1527,29 @@
       initPeerJS();
     }
 
+    // 显示二维码
+    function showQRCode() {
+      if (!myConnectionCode) {
+        showToast('请先等待连接完成');
+        return;
+      }
+
+      const qrModal = document.getElementById('qr-modal');
+      const qrCodeDiv = document.getElementById('qr-code');
+
+      qrCodeDiv.innerHTML = '';
+      QRCode.toCanvas(qrCodeDiv, myConnectionCode, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#667eea',
+          light: '#ffffff'
+        }
+      });
+
+      qrModal.classList.add('active');
+    }
+
     // 初始化 PeerJS
     function initPeerJS() {
       // 创建唯一的 Peer ID
@@ -1815,8 +1867,34 @@
       }
 
       messagesContainer.innerHTML = deviceMessages.map(msg => {
+        // 进度消息
+        if (msg.type === 'progress') {
+          return `
+            <div class="message sent">
+              <div class="message-content">
+                <div class="file-message">
+                  <span class="file-icon">📤</span>
+                  <div class="file-info">
+                    <div class="file-name">${escapeHtml(msg.content)}</div>
+                    <div class="file-progress">
+                      <div class="progress-bar">
+                        <div class="progress-bar-fill" style="width: ${msg.progress}%"></div>
+                      </div>
+                      <div class="progress-info">
+                        <span>发送中...</span>
+                        <span>${msg.progress}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="message-time">${msg.time}</div>
+              </div>
+            </div>
+          `;
+        }
+
+        // 文件消息
         if (msg.fileData) {
-          // 文件消息
           const fileExt = msg.fileName.split('.').pop().toLowerCase();
           const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
           const isVideo = ['mp4', 'webm', 'mov', 'avi'].includes(fileExt);
@@ -2225,10 +2303,36 @@
         return;
       }
 
+      // 显示发送进度
+      const progressId = 'progress-' + Date.now();
+      const fileExt = file.name.split('.').pop().toLowerCase();
+      const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
+      const isVideo = ['mp4', 'webm', 'mov', 'avi'].includes(fileExt);
+
+      // 添加进度消息
+      if (!messages[currentChatPeerId]) {
+        messages[currentChatPeerId] = [];
+      }
+
+      messages[currentChatPeerId].push({
+        type: 'progress',
+        id: progressId,
+        content: `正在发送: ${file.name}`,
+        sent: true,
+        time: new Date().toLocaleTimeString(),
+        progress: 0
+      });
+
+      displayMessages(currentChatPeerId);
+
+      const startTime = Date.now();
+
       // 读取文件并转换为base64
       const reader = new FileReader();
       reader.onload = function(e) {
         const fileData = e.target.result.split(',')[1]; // 移除data:*/*;base64,前缀
+        const endTime = Date.now();
+        const duration = ((endTime - startTime) / 1000).toFixed(2);
 
         try {
           conn.send({
@@ -2236,16 +2340,12 @@
             fileName: file.name,
             fileSize: formatFileSize(file.size),
             fileData: fileData,
-            sender: myNickname
+            sender: myNickname,
+            duration: duration
           });
 
-          if (!messages[currentChatPeerId]) {
-            messages[currentChatPeerId] = [];
-          }
-
-          const fileExt = file.name.split('.').pop().toLowerCase();
-          const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
-          const isVideo = ['mp4', 'webm', 'mov', 'avi'].includes(fileExt);
+          // 移除进度消息,添加文件消息
+          messages[currentChatPeerId] = messages[currentChatPeerId].filter(m => m.id !== progressId);
 
           messages[currentChatPeerId].push({
             content: `${isImage ? '🖼️ 图片' : isVideo ? '🎬 视频' : '📄 文件'}: ${file.name} (${formatFileSize(file.size)})`,
@@ -2258,23 +2358,23 @@
           });
 
           displayMessages(currentChatPeerId);
-          showToast('文件已发送');
+          showToast(`文件已发送 (耗时 ${duration}秒)`);
 
         } catch (error) {
           console.error('发送文件失败:', error);
+          // 移除进度消息
+          messages[currentChatPeerId] = messages[currentChatPeerId].filter(m => m.id !== progressId);
+          displayMessages(currentChatPeerId);
           showToast('发送失败');
         }
       };
 
       reader.onerror = function() {
+        // 移除进度消息
+        messages[currentChatPeerId] = messages[currentChatPeerId].filter(m => m.id !== progressId);
+        displayMessages(currentChatPeerId);
         showToast('文件读取失败');
       };
-
-      // 限制文件大小为5MB
-      if (file.size > 5 * 1024 * 1024) {
-        showToast('文件大小不能超过5MB');
-        return;
-      }
 
       reader.readAsDataURL(file);
     }

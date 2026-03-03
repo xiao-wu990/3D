@@ -1605,6 +1605,15 @@
           console.log('连接已关闭:', peerId);
           if (connections[peerId]) {
             connections[peerId].online = false;
+            // 清除此设备的聊天记录
+            delete messages[peerId];
+            delete unreadMessages[peerId];
+            // 如果当前正在查看此设备，清空显示
+            if (currentChatPeerId === peerId) {
+              currentChatPeerId = null;
+              document.getElementById('current-chat-title').textContent = '选择设备开始聊天';
+              displayMessages(peerId);
+            }
             updateDeviceList();
             showToast(`设备 ${peerId.substring(0, 6)} 已断开`);
           }
@@ -2286,7 +2295,7 @@
       const fileExt = file.name.split('.').pop().toLowerCase();
       const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
       const isVideo = ['mp4', 'webm', 'mov', 'avi'].includes(fileExt);
-      const chunkSize = 64 * 1024; // 64KB 每块，确保可靠传输
+      const chunkSize = 1024 * 1024; // 1MB 每块，大幅减少块数量
 
       // 添加进度消息到所有目标设备
       targetPeerIds.forEach(peerId => {
@@ -2351,12 +2360,75 @@
           }
         });
 
-        // 分块发送文件数据
+        // 分块发送文件数据 - 优化版本
         let chunkIndex = 0;
         let lastProgressUpdate = 0;
-        const PROGRESS_UPDATE_INTERVAL = 100; // 每100ms更新一次UI，避免频繁刷新
+        const PROGRESS_UPDATE_INTERVAL = 500; // 每500ms更新一次UI，大幅减少刷新频率
+        let isSending = false;
 
-        function sendNextChunk() {
+        // 批量发送多个块，减少循环次数
+        function sendMultipleChunks() {
+          if (isSending) return;
+          isSending = true;
+
+          const chunksToSend = Math.min(10, totalChunks - chunkIndex); // 每次最多发送10个块
+
+          for (let i = 0; i < chunksToSend; i++) {
+            const start = (chunkIndex + i) * chunkSize;
+            const end = Math.min(start + chunkSize, fileData.length);
+            const chunk = fileData.substring(start, end);
+
+            targetPeerIds.forEach(targetPeerId => {
+              const conn = connections[targetPeerId]?.conn;
+              if (!conn || !conn.open) {
+                return;
+              }
+
+              try {
+                conn.send({
+                  type: 'file-chunk',
+                  fileId: fileId,
+                  chunkIndex: chunkIndex + i,
+                  chunkData: chunk
+                });
+              } catch (error) {
+                console.error('发送文件块失败:', error);
+              }
+            });
+          }
+
+          sentChunks += chunksToSend;
+          chunkIndex += chunksToSend;
+
+          const progress = Math.floor((sentChunks / totalChunks) * 100);
+          const now = Date.now();
+
+          // 只在间隔时间内更新UI
+          if (now - lastProgressUpdate >= PROGRESS_UPDATE_INTERVAL) {
+            lastProgressUpdate = now;
+
+            // 更新所有目标设备的进度
+            targetPeerIds.forEach(targetPeerId => {
+              const progressMsg = messages[targetPeerId].find(m => m.id === fileId);
+              if (progressMsg) {
+                progressMsg.content = `正在发送: ${file.name} (${progress}%)`;
+                progressMsg.progress = progress;
+              }
+            });
+
+            if (targetPeerIds.includes(displayPeerId)) {
+              // 使用 debounce 避免频繁更新
+              if (!displayMessages.debounceTimer) {
+                displayMessages.debounceTimer = setTimeout(() => {
+                  displayMessages(displayPeerId);
+                  displayMessages.debounceTimer = null;
+                }, 100);
+              }
+            }
+          }
+
+          isSending = false;
+
           if (chunkIndex >= totalChunks) {
             // 发送完成
             const endTime = Date.now();
@@ -2403,63 +2475,13 @@
             } else {
               showToast(`文件已发送 (耗时 ${duration}秒)`);
             }
-            return;
+          } else {
+            // 继续发送
+            setTimeout(sendMultipleChunks, 50);
           }
-
-          const start = chunkIndex * chunkSize;
-          const end = Math.min(start + chunkSize, fileData.length);
-          const chunk = fileData.substring(start, end);
-
-          // 发送数据块（不阻塞UI）
-          targetPeerIds.forEach(targetPeerId => {
-            const conn = connections[targetPeerId]?.conn;
-            if (!conn || !conn.open) {
-              return;
-            }
-
-            try {
-              conn.send({
-                type: 'file-chunk',
-                fileId: fileId,
-                chunkIndex: chunkIndex,
-                chunkData: chunk
-              });
-            } catch (error) {
-              console.error('发送文件块失败:', error);
-            }
-          });
-
-          sentChunks++;
-          const progress = Math.floor((sentChunks / totalChunks) * 100);
-          const now = Date.now();
-
-          // 只在间隔时间内更新UI
-          if (now - lastProgressUpdate >= PROGRESS_UPDATE_INTERVAL) {
-            lastProgressUpdate = now;
-
-            // 更新所有目标设备的进度
-            targetPeerIds.forEach(targetPeerId => {
-              const progressMsg = messages[targetPeerId].find(m => m.id === fileId);
-              if (progressMsg) {
-                progressMsg.content = `正在发送: ${file.name} (${progress}%)`;
-                progressMsg.progress = progress;
-              }
-            });
-
-            if (targetPeerIds.includes(displayPeerId)) {
-              requestAnimationFrame(() => displayMessages(displayPeerId));
-            }
-          }
-
-          chunkIndex++;
-
-          // 使用 requestAnimationFrame 避免阻塞UI
-          requestAnimationFrame(() => {
-            setTimeout(() => sendNextChunk(), 5);
-          });
         }
 
-        sendNextChunk();
+        sendMultipleChunks();
       };
 
       reader.onerror = function() {

@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.p2p.filetransfer" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>P2P文件传输</name>
+    <description>
+        A sample Apache Cordova application that responds to the deviceready event.
+    </description>
+    <author email="dev@cordova.apache.org" href="https://cordova.apache.org">
+        Apache Cordova Team
+    </author>
+    <content src="index.html" />
+    <preference name="android-buildToolsVersion" value="37.0.0-rc2" />
+    <preference name="android-compileSdkVersion" value="37" />
+    <preference name="android-targetSdkVersion" value="37" />
+    <preference name="android-release-signing" value="true" />
+    <preference name="android-signing-keystore" value="D:\my-release-key.keystore" />
+    <preference name="android-signing-alias" value="release-key" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+</widget>

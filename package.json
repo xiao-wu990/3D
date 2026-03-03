@@ -1,27 +1,57 @@
 {
-  "name": "lan-file-transfer",
-  "version": "1.0.0",
-  "description": "局域网文件传输工具 - 支持发送端和接收端双向传输",
-  "main": "server.js",
+  "name": "p2p-realtime-communication",
+  "version": "2.0.0",
+  "description": "跨平台实时通信工具 - 支持Web、Windows、Android",
+  "main": "main.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "electron": "electron .",
+    "electron-dev": "electron . --dev",
+    "build-win": "electron-builder --win",
+    "build-linux": "electron-builder --linux",
+    "build-mac": "electron-builder --mac",
+    "android:sync": "npx cap sync android",
+    "android:open": "npx cap open android",
+    "android:build": "npx cap build android"
   },
   "keywords": [
     "file-transfer",
-    "lan",
+    "realtime-communication",
     "websocket",
-    "p2p"
+    "p2p",
+    "webrtc",
+    "electron",
+    "android"
   ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
-    "ws": "^8.14.2",
+    "multer": "^1.4.5-lts.1",
     "qrcode": "^1.5.3",
-    "multer": "^1.4.5-lts.1"
+    "ws": "^8.14.2"
   },
   "devDependencies": {
+    "@capacitor/android": "^5.6.0",
+    "@capacitor/cli": "^5.6.0",
+    "@capacitor/core": "^5.6.0",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3",
     "nodemon": "^3.0.1"
+  },
+  "build": {
+    "appId": "com.p2p.communication",
+    "productName": "P2P实时通信",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

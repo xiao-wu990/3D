@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>局域网文件传输</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 欢迎页面 -->
+    <div id="welcome-screen" class="screen">
+      <div class="logo">
+        <div class="logo-icon">📡</div>
+        <h1>局域网文件传输</h1>
+        <p>快速、安全、便捷的局域网文件传输工具</p>
+      </div>
+      <div class="role-selection">
+        <button class="role-btn sender" onclick="selectRole('sender')">
+          <div class="btn-icon">📤</div>
+          <div class="btn-text">发送端</div>
+          <div class="btn-hint">发送文件到对方</div>
+        </button>
+        <button class="role-btn receiver" onclick="selectRole('receiver')">
+          <div class="btn-icon">📥</div>
+          <div class="btn-text">接收端</div>
+          <div class="btn-hint">接收文件并也可发送</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- 发送端 - 连接页面 -->
+    <div id="sender-connect-screen" class="screen hidden">
+      <div class="header">
+        <button class="back-btn" onclick="goBack()">← 返回</button>
+        <h2>📤 发送端</h2>
+        <div class="connection-status">
+          <span class="status-indicator" id="sender-status-indicator"></span>
+          <span id="sender-status-text">连接中...</span>
+        </div>
+      </div>
+      <div class="content">
+        <div class="section-title">🔍 选择连接方式</div>
+        <div class="connection-methods">
+          <div class="method-card" onclick="loadReceiversList()">
+            <div class="method-icon">📱</div>
+            <h3>选择接收端</h3>
+            <p>自动查找局域网中的接收端</p>
+          </div>
+          <div class="method-card" onclick="showQRScannerHint()">
+            <div class="method-icon">📷</div>
+            <h3>扫描二维码</h3>
+            <p>扫描接收端的二维码连接</p>
+          </div>
+          <div class="method-card" onclick="openIPInput()">
+            <div class="method-icon">🌐</div>
+            <h3>输入IP地址</h3>
+            <p>手动输入接收端的IP地址</p>
+          </div>
+        </div>
+
+        <div id="receivers-section" class="receivers-section hidden">
+          <div class="section-title">📥 可用接收端</div>
+          <div class="refresh-section">
+            <button class="btn-secondary" onclick="loadReceiversList()">🔄 刷新列表</button>
+          </div>
+          <div id="receivers-list" class="receivers-list">
+            <div class="loading">⏳ 正在搜索接收端...</div>
+          </div>
+          <div class="help-text">
+            <p>💡 提示：请确保接收端已经启动并访问: http://localhost:3000?role=receiver</p>
+          </div>
+        </div>
+      </div>
+
+    <!-- 扫描二维码提示对话框 -->
+    <div id="qr-hint-dialog" class="dialog hidden">
+      <div class="dialog-content">
+        <h3>📷 扫描二维码</h3>
+        <p>请使用手机或其他设备扫描接收端显示的二维码</p>
+        <div class="dialog-buttons">
+          <button class="btn-secondary" onclick="closeQRHint()">取消</button>
+          <button class="btn-primary" onclick="openIPInput()">输入IP地址</button>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <!-- 发送端 - 文件传输页面 -->
+    <div id="sender-transfer-screen" class="screen hidden">
+      <div class="header">
+        <button class="back-btn" onclick="disconnect()">← 断开连接</button>
+        <h2>📤 发送文件</h2>
+        <div class="connection-status" id="sender-connected-status">
+          <span class="status-indicator online"></span>
+          <span>已连接</span>
+        </div>
+      </div>
+      <div class="content">
+        <div class="upload-area" id="sender-upload-area">
+          <div class="upload-icon">📁</div>
+          <h3>拖拽文件到这里</h3>
+          <p>或点击选择文件</p>
+          <input type="file" id="sender-file-input" multiple style="display: none;" />
+          <button class="btn-primary" onclick="document.getElementById('sender-file-input').click()">选择文件</button>
+        </div>
+
+        <div class="transfer-list" id="sender-transfer-list">
+          <h3>📤 传输列表</h3>
+          <div id="sender-transfers"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 接收端 - 连接页面 -->
+    <div id="receiver-connect-screen" class="screen hidden">
+      <div class="header">
+        <button class="back-btn" onclick="goBack()">← 返回</button>
+        <h2>📥 接收端</h2>
+        <div class="connection-status">
+          <span class="status-indicator online"></span>
+          <span>等待连接</span>
+        </div>
+      </div>
+      <div class="content">
+        <div class="receiver-info">
+          <div class="info-card">
+            <h3>🌐 本机IP地址</h3>
+            <p id="local-ip" class="ip-address">获取中...</p>
+            <button class="btn-small" onclick="copyIP()">📋 复制</button>
+          </div>
+
+          <div class="qr-container">
+            <h3>📱 二维码（发送端扫描连接）</h3>
+            <div id="qrcode" class="qr-code">
+              <div class="qr-loading">⏳ 生成中...</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="connection-request" class="connection-request hidden">
+          <div class="request-content">
+            <div class="request-icon">🔔</div>
+            <h3>连接请求</h3>
+            <p>发送端请求连接到你</p>
+            <div class="request-buttons">
+              <button class="btn-secondary" onclick="rejectConnection()">🚫 拒绝</button>
+              <button class="btn-primary" onclick="acceptConnection()">✅ 接受</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 接收端 - 文件传输页面 -->
+    <div id="receiver-transfer-screen" class="screen hidden">
+      <div class="header">
+        <button class="back-btn" onclick="disconnect()">← 断开连接</button>
+        <h2>📥 接收文件</h2>
+        <div class="connection-status">
+          <span class="status-indicator online"></span>
+          <span>已连接</span>
+        </div>
+      </div>
+      <div class="content">
+        <div class="upload-area" id="receiver-upload-area">
+          <div class="upload-icon">📤</div>
+          <h3>发送文件到对方</h3>
+          <p>或点击选择文件</p>
+          <input type="file" id="receiver-file-input" multiple style="display: none;" />
+          <button class="btn-primary" onclick="document.getElementById('receiver-file-input').click()">选择文件</button>
+        </div>
+
+        <div class="transfer-list" id="receiver-transfer-list">
+          <h3>📥 接收列表</h3>
+          <div id="receiver-transfers"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 通知提示 -->
+    <div id="notification" class="notification hidden"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

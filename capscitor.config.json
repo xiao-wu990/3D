@@ -1,0 +1,10 @@
+{
+  "appId": "com.p2p.filetransfer",
+  "appName": "P2P文件传输",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  }
+}

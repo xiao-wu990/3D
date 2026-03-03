@@ -497,6 +497,140 @@
       border-left: 4px solid #dc3545;
     }
 
+    .call-controls {
+      margin-top: 30px;
+      padding: 20px;
+      background: var(--info-bg);
+      border-radius: 16px;
+      animation: slideIn 0.4s ease-out;
+    }
+
+    .call-participants {
+      padding: 15px;
+      background: var(--container-bg);
+      border-radius: 12px;
+      margin-top: 15px;
+    }
+
+    .participant-tag {
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 20px;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .call-status {
+      padding: 15px;
+      border-radius: 12px;
+      margin-top: 15px;
+    }
+
+    .call-status.connecting {
+      background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+      color: #856404;
+    }
+
+    .call-status.connected {
+      background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+      color: #155724;
+    }
+
+    .call-status.ended {
+      background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+      color: #721c24;
+    }
+
+    .call-status.incoming {
+      background: linear-gradient(135deg, #cce5ff 0%, #b3d4ff 100%);
+      color: #004085;
+    }
+
+    .call-buttons {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .call-btn {
+      padding: 20px 40px;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 160px;
+      justify-content: center;
+    }
+
+    .call-btn.primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .call-btn.primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+    }
+
+    .call-btn.danger {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    }
+
+    .call-btn.danger:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(220, 53, 69, 0.5);
+    }
+
+    .call-btn.success {
+      background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    }
+
+    .call-btn.success:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(40, 167, 69, 0.5);
+    }
+
+    .remote-video-container {
+      position: relative;
+      margin-top: 20px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .remote-video-container video {
+      width: 100%;
+      max-height: 480px;
+      background: #000;
+    }
+
+    .local-video-container {
+      position: relative;
+    }
+
+    .local-video-container video {
+      width: 200px;
+      height: 150px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      border: 3px solid white;
+    }
+
     .file-list {
       margin-top: 30px;
     }
@@ -674,6 +808,29 @@
         <p>电视浏览器可能不完全支持跨地域传输。建议使用手机、电脑或平板进行传输。如果一定要在电视上使用，建议使用 Chrome TV 版本。</p>
       </div>
 
+      <!-- 昵称设置 -->
+      <div class="nickname-section">
+        <h4>👤 设置昵称</h4>
+        <div class="nickname-input-group">
+          <input type="text" id="nickname-input" placeholder="输入你的昵称(例如: 小明)" maxlength="20">
+          <button class="btn btn-primary" onclick="setNickname()">确定</button>
+        </div>
+
+        <!-- 自动连接设置 -->
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid var(--input-border);">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <label style="font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <input type="checkbox" id="auto-connect-checkbox" onchange="toggleAutoConnect()">
+              <span>启用自动连接</span>
+            </label>
+            <span style="font-size: 12px; color: var(--text-secondary);">连续连接3次后自动连接</span>
+          </div>
+          <div id="auto-connect-info" style="display: none; padding: 12px; background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border-radius: 8px; font-size: 13px; color: #155724;">
+            <p style="margin: 0;">💡 自动连接已启用,下次访问时会自动选择模式并连接到常用设备</p>
+          </div>
+        </div>
+      </div>
+
       <!-- 模式选择 -->
       <div class="mode-selector" id="mode-selector">
         <div class="mode-btn" onclick="selectMode('sender')" id="sender-btn">
@@ -685,6 +842,11 @@
           <div class="icon">📥</div>
           <h3>接收端</h3>
           <p>接收文件</p>
+        </div>
+        <div class="mode-btn" onclick="selectMode('multi')" id="multi-btn">
+          <div class="icon">👥</div>
+          <h3>多人模式</h3>
+          <p>多设备同时连接</p>
         </div>
       </div>
 
@@ -706,6 +868,32 @@
       <!-- 状态 -->
       <div class="status" id="status"></div>
 
+      <!-- 聊天区域 -->
+      <div class="chat-section" id="chat-section">
+        <h4>💬 文字聊天</h4>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-input-group">
+          <input type="text" id="chat-input" placeholder="输入消息..." onkeypress="if(event.key==='Enter')sendMessage()">
+          <button class="btn btn-primary" onclick="sendMessage()">发送</button>
+        </div>
+      </div>
+
+      <!-- 麦克风喊话模式 -->
+      <div class="mic-section" id="mic-section">
+        <h4>🎤 麦克风喊话模式</h4>
+        <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 14px;">开启后,你说的每一句话都会实时传送到所有连接的设备</p>
+        <div class="mic-buttons">
+          <button class="mic-btn idle" id="mic-toggle-btn" onclick="toggleMicrophone()">
+            <span id="mic-btn-icon">🎙️</span>
+            <span id="mic-btn-text">开启麦克风</span>
+          </button>
+          <button class="btn btn-secondary" onclick="toggleMute()" id="mute-btn">
+            🔇 静音
+          </button>
+        </div>
+        <div class="status" id="mic-status" style="display: none; margin-top: 15px;"></div>
+      </div>
+
       <!-- 文件上传区域 -->
       <div class="file-area" id="file-area" onclick="document.getElementById('file-input').click()">
         <div class="icon">📁</div>
@@ -716,6 +904,48 @@
 
       <!-- 文件列表 -->
       <div class="file-list" id="file-list"></div>
+
+      <!-- 通话控制区域 -->
+      <div class="call-controls" id="call-controls" style="display: none;">
+        <h4 style="color: #667eea; margin-bottom: 15px; font-size: 18px; font-weight: 700;">📞 通话功能</h4>
+        <div class="call-buttons">
+          <button class="call-btn primary" onclick="startVoiceCall()" id="voice-call-btn">
+            🎤 语音通话
+          </button>
+          <button class="call-btn primary" onclick="startVideoCall()" id="video-call-btn">
+            📹 视频通话
+          </button>
+          <button class="call-btn success" onclick="inviteToCall()" id="invite-btn" style="display: none;">
+            📨 邀请加入
+          </button>
+          <button class="call-btn danger" onclick="endCall()" id="end-call-btn" style="display: none;">
+            📵 挂断
+          </button>
+        </div>
+
+        <!-- 通话状态 -->
+        <div class="call-status" id="call-status" style="display: none; margin-top: 15px;">
+          <span id="call-status-text"></span>
+        </div>
+
+        <!-- 通话参与者列表 -->
+        <div class="call-participants" id="call-participants" style="display: none; margin-top: 15px;">
+          <h5 style="color: #667eea; margin-bottom: 10px; font-size: 16px; font-weight: 700;">👥 通话参与者</h5>
+          <div id="participants-list" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+        </div>
+
+        <!-- 视频容器 -->
+        <div id="video-wrapper" style="position: relative; width: 100%; display: none; margin-top: 20px;">
+          <!-- 远程视频网格 -->
+          <div class="remote-videos-grid" id="remote-videos-grid" style="display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+          </div>
+
+          <!-- 本地视频显示 -->
+          <div class="local-video-container" id="local-video-container">
+            <video id="local-video" autoplay playsinline muted></video>
+          </div>
+        </div>
+      </div>
 
       <!-- 底部链接 -->
       <div class="footer">
@@ -765,9 +995,28 @@
     }
 
     let peer = null;
-    let conn = null;
+    let connections = {}; // 多连接支持
     let mode = null;
     let browserSupportIssues = [];
+    let currentCalls = {}; // 多通话支持
+    let localStream = null;
+    let remoteStreams = {}; // 远程流存储
+    let isInCall = false;
+    let currentCallType = null; // 'voice' or 'video'
+    let callParticipants = {}; // 通话参与者
+    let myNickname = '匿名用户';
+    let isMicEnabled = false;
+    let mediaRecorder = null;
+    let audioContext = null;
+    let analyser = null;
+    let isMuted = false;
+    let mediaElement = null;
+
+    // 自动连接相关
+    let autoConnectEnabled = false;
+    let frequentDevices = {}; // 记录频繁连接的设备 {peerId: {count: 3, lastConnect: timestamp}}
+    const AUTO_CONNECT_THRESHOLD = 3; // 连接次数阈值
+    const AUTO_CONNECT_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7天过期
 
     // 页面加载时检查兼容性
     window.addEventListener('DOMContentLoaded', function() {
@@ -781,6 +1030,10 @@
         document.getElementById('mode-selector').style.opacity = '0.5';
         document.getElementById('mode-selector').style.pointerEvents = 'none';
       }
+
+      // 加载自动连接设置
+      loadAutoConnectSettings();
+      loadSavedNickname();
     });
 
     // 选择模式
@@ -915,6 +1168,7 @@
       conn.on('open', () => {
         showStatus('✅ 连接成功！可以传输文件了', 'connected');
         document.getElementById('file-area').classList.remove('disabled');
+        document.getElementById('call-controls').style.display = 'block';
         console.log('Connection established');
       });
 
@@ -925,13 +1179,25 @@
           handleFile(data);
         } else if (data.type === 'message') {
           showStatus('💬 对方消息: ' + data.message, 'connected');
+        } else if (data.type === 'call') {
+          handleIncomingCall(data);
+        } else if (data.type === 'call-answer') {
+          handleCallAnswer(data);
+        } else if (data.type === 'call-reject') {
+          handleCallReject();
+        } else if (data.type === 'call-end') {
+          handleCallEnd();
         }
       });
 
       conn.on('close', () => {
         showStatus('❌ 连接已断开', 'error');
         document.getElementById('file-area').classList.add('disabled');
+        document.getElementById('call-controls').style.display = 'none';
         conn = null;
+        if (isInCall) {
+          endCall();
+        }
       });
 
       conn.on('error', (err) => {
@@ -1147,6 +1413,422 @@
 
     // 初始禁用文件上传区域
     document.getElementById('file-area').classList.add('disabled');
+
+    // ========== 通话功能 ==========
+
+    // 开始语音通话
+    async function startVoiceCall() {
+      if (isInCall) {
+        alert('已在通话中');
+        return;
+      }
+
+      if (!conn || conn.open !== true) {
+        alert('请先建立连接');
+        return;
+      }
+
+      try {
+        showCallStatus('⏳ 正在发起语音通话...', 'connecting');
+
+        // 获取本地音频流
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: false
+        });
+
+        // 发起呼叫请求
+        conn.send({
+          type: 'call',
+          callType: 'voice',
+          peerId: peer.id
+        });
+
+        updateCallUI(true);
+      } catch (error) {
+        console.error('获取音频失败:', error);
+        alert('无法访问麦克风,请检查权限设置');
+        hideCallStatus();
+      }
+    }
+
+    // 开始视频通话
+    async function startVideoCall() {
+      if (isInCall) {
+        alert('已在通话中');
+        return;
+      }
+
+      if (!conn || conn.open !== true) {
+        alert('请先建立连接');
+        return;
+      }
+
+      try {
+        showCallStatus('⏳ 正在发起视频通话...', 'connecting');
+
+        // 获取本地音视频流
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: true
+        });
+
+        // 显示本地视频
+        const localVideo = document.getElementById('local-video');
+        localVideo.srcObject = localStream;
+        document.getElementById('video-wrapper').style.display = 'block';
+
+        // 发起呼叫请求
+        conn.send({
+          type: 'call',
+          callType: 'video',
+          peerId: peer.id
+        });
+
+        updateCallUI(true);
+      } catch (error) {
+        console.error('获取音视频失败:', error);
+        alert('无法访问摄像头或麦克风,请检查权限设置');
+        hideCallStatus();
+      }
+    }
+
+    // 处理来电
+    function handleIncomingCall(data) {
+      const callType = data.callType;
+      const typeText = callType === 'video' ? '视频通话' : '语音通话';
+
+      if (confirm(`对方发起了${typeText},是否接听?`)) {
+        acceptCall(callType);
+      } else {
+        rejectCall();
+      }
+    }
+
+    // 接听通话
+    async function acceptCall(callType) {
+      try {
+        showCallStatus('⏳ 正在建立通话...', 'connecting');
+
+        // 获取本地音视频流
+        const constraints = callType === 'video'
+          ? { audio: true, video: true }
+          : { audio: true, video: false };
+
+        localStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+        // 如果是视频通话,显示本地视频
+        if (callType === 'video') {
+          const localVideo = document.getElementById('local-video');
+          localVideo.srcObject = localStream;
+          document.getElementById('video-wrapper').style.display = 'block';
+        }
+
+        // 发送接受通话的消息
+        conn.send({
+          type: 'call-answer',
+          accepted: true
+        });
+
+        isInCall = true;
+        updateCallUI(true);
+        showCallStatus('📞 通话中...', 'connected');
+      } catch (error) {
+        console.error('接听失败:', error);
+        alert('接听失败,请检查权限设置');
+        hideCallStatus();
+      }
+    }
+
+    // 拒绝通话
+    function rejectCall() {
+      conn.send({
+        type: 'call-answer',
+        accepted: false
+      });
+      showCallStatus('❌ 已拒绝通话', 'ended');
+      setTimeout(hideCallStatus, 2000);
+    }
+
+    // 处理通话应答
+    function handleCallAnswer(data) {
+      if (data.accepted) {
+        isInCall = true;
+        showCallStatus('📞 通话已接通', 'connected');
+      } else {
+        showCallStatus('❌ 对方拒绝了通话', 'ended');
+        setTimeout(() => {
+          hideCallStatus();
+          cleanupCall();
+        }, 2000);
+      }
+    }
+
+    // 处理通话拒绝
+    function handleCallReject() {
+      showCallStatus('❌ 对方拒绝了通话', 'ended');
+      setTimeout(() => {
+        hideCallStatus();
+        cleanupCall();
+      }, 2000);
+    }
+
+    // 结束通话
+    function endCall() {
+      if (conn && conn.open === true) {
+        conn.send({ type: 'call-end' });
+      }
+
+      showCallStatus('📵 通话已结束', 'ended');
+
+      setTimeout(() => {
+        hideCallStatus();
+        cleanupCall();
+      }, 1500);
+    }
+
+    // 处理通话结束
+    function handleCallEnd() {
+      showCallStatus('📵 对方已结束通话', 'ended');
+      setTimeout(() => {
+        hideCallStatus();
+        cleanupCall();
+      }, 1500);
+    }
+
+    // 清理通话资源
+    function cleanupCall() {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+
+      if (remoteStream) {
+        remoteStream.getTracks().forEach(track => track.stop());
+        remoteStream = null;
+      }
+
+      const localVideo = document.getElementById('local-video');
+      const remoteVideo = document.getElementById('remote-video');
+
+      if (localVideo) {
+        localVideo.srcObject = null;
+      }
+
+      if (remoteVideo) {
+        remoteVideo.srcObject = null;
+      }
+
+      document.getElementById('video-wrapper').style.display = 'none';
+
+      isInCall = false;
+      updateCallUI(false);
+    }
+
+    // 更新通话UI
+    function updateCallUI(inCall) {
+      const voiceCallBtn = document.getElementById('voice-call-btn');
+      const videoCallBtn = document.getElementById('video-call-btn');
+      const endCallBtn = document.getElementById('end-call-btn');
+
+      if (inCall) {
+        voiceCallBtn.style.display = 'none';
+        videoCallBtn.style.display = 'none';
+        endCallBtn.style.display = 'inline-flex';
+      } else {
+        voiceCallBtn.style.display = 'inline-flex';
+        videoCallBtn.style.display = 'inline-flex';
+        endCallBtn.style.display = 'none';
+      }
+    }
+
+    // 显示通话状态
+    function showCallStatus(message, status) {
+      const callStatus = document.getElementById('call-status');
+      const callStatusText = document.getElementById('call-status-text');
+
+      callStatusText.textContent = message;
+      callStatus.className = 'call-status show ' + status;
+      callStatus.style.display = 'block';
+    }
+
+    // 隐藏通话状态
+    function hideCallStatus() {
+      const callStatus = document.getElementById('call-status');
+      callStatus.style.display = 'none';
+    }
+
+    // ========== 自动连接功能 ==========
+
+    // 加载保存的昵称
+    function loadSavedNickname() {
+      const savedNickname = localStorage.getItem('p2p_nickname');
+      if (savedNickname) {
+        myNickname = savedNickname;
+        const nicknameInput = document.getElementById('nickname-input');
+        if (nicknameInput) {
+          nicknameInput.value = savedNickname;
+        }
+        document.title = `🌍 ${savedNickname} - 跨地域 P2P 文件传输`;
+      }
+    }
+
+    // 加载自动连接设置
+    function loadAutoConnectSettings() {
+      const savedAutoConnect = localStorage.getItem('p2p_auto_connect');
+      const savedFrequentDevices = localStorage.getItem('p2p_frequent_devices');
+
+      if (savedAutoConnect === 'true') {
+        autoConnectEnabled = true;
+        const checkbox = document.getElementById('auto-connect-checkbox');
+        if (checkbox) {
+          checkbox.checked = true;
+        }
+        document.getElementById('auto-connect-info').style.display = 'block';
+      }
+
+      if (savedFrequentDevices) {
+        try {
+          frequentDevices = JSON.parse(savedFrequentDevices);
+          // 清理过期的记录
+          const now = Date.now();
+          const cleaned = {};
+          for (const peerId in frequentDevices) {
+            if (now - frequentDevices[peerId].lastConnect < AUTO_CONNECT_EXPIRY) {
+              cleaned[peerId] = frequentDevices[peerId];
+            }
+          }
+          frequentDevices = cleaned;
+          saveFrequentDevices();
+        } catch (e) {
+          console.error('加载频繁设备记录失败:', e);
+          frequentDevices = {};
+        }
+      }
+
+      // 检查是否需要自动连接
+      if (autoConnectEnabled) {
+        checkAndAutoConnect();
+      }
+    }
+
+    // 切换自动连接
+    function toggleAutoConnect() {
+      const checkbox = document.getElementById('auto-connect-checkbox');
+      autoConnectEnabled = checkbox.checked;
+
+      localStorage.setItem('p2p_auto_connect', autoConnectEnabled.toString());
+
+      if (autoConnectEnabled) {
+        document.getElementById('auto-connect-info').style.display = 'block';
+        showStatus('✅ 自动连接已启用', 'connected');
+      } else {
+        document.getElementById('auto-connect-info').style.display = 'none';
+        showStatus('📴 自动连接已关闭', 'connected');
+      }
+    }
+
+    // 记录连接
+    function recordConnection(peerId) {
+      if (!autoConnectEnabled) return;
+
+      if (!frequentDevices[peerId]) {
+        frequentDevices[peerId] = {
+          count: 0,
+          lastConnect: 0,
+          mode: mode
+        };
+      }
+
+      frequentDevices[peerId].count++;
+      frequentDevices[peerId].lastConnect = Date.now();
+      frequentDevices[peerId].mode = mode;
+
+      saveFrequentDevices();
+
+      // 检查是否达到阈值
+      if (frequentDevices[peerId].count >= AUTO_CONNECT_THRESHOLD) {
+        showStatus('🎉 检测到频繁连接!下次访问将自动连接', 'connected');
+      }
+    }
+
+    // 保存频繁设备记录
+    function saveFrequentDevices() {
+      localStorage.setItem('p2p_frequent_devices', JSON.stringify(frequentDevices));
+    }
+
+    // 检查并自动连接
+    function checkAndAutoConnect() {
+      // 找出连接次数最多的设备
+      let maxPeerId = null;
+      let maxCount = 0;
+
+      for (const peerId in frequentDevices) {
+        if (frequentDevices[peerId].count >= AUTO_CONNECT_THRESHOLD) {
+          if (frequentDevices[peerId].count > maxCount) {
+            maxCount = frequentDevices[peerId].count;
+            maxPeerId = peerId;
+          }
+        }
+      }
+
+      if (!maxPeerId) return;
+
+      // 询问用户是否自动连接
+      const deviceMode = frequentDevices[maxPeerId].mode;
+      const modeText = deviceMode === 'sender' ? '发送端' : (deviceMode === 'receiver' ? '接收端' : '多人模式');
+
+      if (confirm(`检测到您经常与设备 ${maxPeerId} 连接(${maxCount}次)\n是否自动选择${modeText}并尝试连接?`)) {
+        // 自动选择模式
+        selectMode(deviceMode);
+
+        // 等待Peer初始化完成后自动连接
+        const autoConnectInterval = setInterval(() => {
+          if (peer && peer.id) {
+            clearInterval(autoConnectInterval);
+
+            document.getElementById('remote-id').value = maxPeerId;
+
+            setTimeout(() => {
+              connect();
+              showStatus('🚀 正在自动连接...', 'connecting');
+            }, 500);
+          }
+        }, 100);
+
+        // 超时清除
+        setTimeout(() => {
+          clearInterval(autoConnectInterval);
+        }, 10000);
+      }
+    }
+
+    // 修改连接函数,记录连接
+    const originalConnect = connect;
+    window.connect = function() {
+      const result = originalConnect.apply(this, arguments);
+
+      // 记录连接(如果是主动连接)
+      const remoteId = document.getElementById('remote-id').value.trim();
+      if (remoteId) {
+        recordConnection(remoteId);
+      }
+
+      return result;
+    };
+
+    // 修改setupConnection,记录被动连接
+    const originalSetupConnection = setupConnection;
+    window.setupConnection = function(connection) {
+      const result = originalSetupConnection.apply(this, arguments);
+
+      // 记录连接(如果是被动连接)
+      if (connection && connection.peer) {
+        recordConnection(connection.peer);
+      }
+
+      return result;
+    };
   </script>
 </body>
 </html>

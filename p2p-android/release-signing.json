@@ -1,0 +1,18 @@
+{
+  "android": {
+    "debug": {
+      "keystore": "D:\\my-release-key.keystore",
+      "storePassword": "19996837879gxh",
+      "alias": "release-key",
+      "password": "19996837879gxh",
+      "keystoreType": ""
+    },
+    "release": {
+      "keystore": "D:\\my-release-key.keystore",
+      "storePassword": "19996837879gxh",
+      "alias": "release-key",
+      "password": "19996837879gxh",
+      "keystoreType": ""
+    }
+  }
+}

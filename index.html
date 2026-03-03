@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>P2P 跨地域文件传输</title>
+  <title>P2P实时通信</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -11,1676 +12,1459 @@
       box-sizing: border-box;
     }
 
-    :root {
-      --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      --container-bg: white;
-      --text-primary: #333;
-      --text-secondary: #666;
-      --input-bg: #fafafa;
-      --input-border: #e0e0e0;
-      --btn-primary-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      --btn-secondary-bg: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
-      --file-area-bg: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
-      --file-area-hover: linear-gradient(135deg, #f0f3ff 0%, #e8ebff 100%);
-      --info-bg: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-      --file-item-bg: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-      --shadow-color: rgba(0, 0, 0, 0.3);
-    }
-
-    .dark-mode {
-      --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      --container-bg: #1e1e2e;
-      --text-primary: #e0e0e0;
-      --text-secondary: #a0a0a0;
-      --input-bg: #2a2a3e;
-      --input-border: #3a3a4e;
-      --btn-primary-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      --btn-secondary-bg: linear-gradient(135deg, #3a3a4e 0%, #2a2a3e 100%);
-      --file-area-bg: linear-gradient(135deg, #2a2a3e 0%, #3a3a4e 100%);
-      --file-area-hover: linear-gradient(135deg, #3a3a4e 0%, #4a4a5e 100%);
-      --info-bg: linear-gradient(135deg, #2a2a3e 0%, #3a3a4e 100%);
-      --file-item-bg: linear-gradient(135deg, #2a2a3e 0%, #3a3a4e 100%);
-      --shadow-color: rgba(0, 0, 0, 0.5);
-    }
-
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-      background: var(--bg-gradient);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
+      color: #333;
+    }
+
+    /* 初始化界面 */
+    #setup-screen {
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
+      justify-content: center;
+      min-height: 100vh;
       padding: 20px;
-      animation: fadeIn 0.5s ease-in;
-      transition: background 0.3s ease;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateX(-30px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    @keyframes shimmer {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
-    }
-
-    @keyframes glow {
-      0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.3); }
-      50% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.6); }
-    }
-
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-5px); }
-    }
-
-    .container {
-      background: var(--container-bg);
-      border-radius: 24px;
-      box-shadow: 0 25px 80px var(--shadow-color);
-      max-width: 900px;
+    .setup-container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
       width: 100%;
-      overflow: hidden;
-      animation: fadeIn 0.6s ease-out;
-      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .setup-container h1 {
+      text-align: center;
+      color: #667eea;
+      margin-bottom: 30px;
+      font-size: 2rem;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #555;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .setup-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .setup-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    /* 主界面 */
+    #main-screen {
+      display: none;
+      min-height: 100vh;
     }
 
     .header {
+      background: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 40px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .header::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-      animation: float 6s ease-in-out infinite;
-    }
-
-    .header h1 {
-      font-size: 36px;
-      margin-bottom: 12px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-      position: relative;
-      z-index: 1;
-      animation: bounce 2s ease-in-out infinite;
-    }
-
-    .header p {
-      opacity: 0.95;
-      font-size: 16px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .content {
-      padding: 40px;
-    }
-
-    .theme-toggle {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: var(--container-bg);
-      border: 2px solid var(--input-border);
       border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
-      box-shadow: 0 4px 12px var(--shadow-color);
-      transition: all 0.3s;
-      z-index: 1000;
+      color: white;
+      font-weight: bold;
     }
 
-    .theme-toggle:hover {
-      transform: scale(1.1);
-      box-shadow: 0 6px 20px var(--shadow-color);
-    }
-
-    .footer {
-      padding: 30px 40px;
-      text-align: center;
-      border-top: 2px solid var(--input-border);
-      margin-top: 30px;
-    }
-
-    .footer-links {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-
-    .footer-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 24px;
-      background: var(--btn-secondary-bg);
-      color: var(--text-primary);
-      text-decoration: none;
-      border-radius: 12px;
-      font-weight: 600;
-      transition: all 0.3s;
-      box-shadow: 0 2px 8px var(--shadow-color);
-    }
-
-    .footer-link:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px var(--shadow-color);
-    }
-
-    .footer-link .icon {
-      font-size: 20px;
-    }
-
-    .mode-selector {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      margin-bottom: 40px;
-    }
-
-    .mode-btn {
-      padding: 50px 30px;
-      border: 3px solid var(--input-border);
+    .device-type {
+      background: #f0f0f0;
+      padding: 4px 12px;
       border-radius: 20px;
-      background: var(--container-bg);
-      cursor: pointer;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .mode-btn::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
-      transition: left 0.5s;
-    }
-
-    .mode-btn:hover::before {
-      left: 100%;
-    }
-
-    .mode-btn:hover {
-      border-color: #667eea;
-      transform: translateY(-5px);
-      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-    }
-
-    .mode-btn.active {
-      border-color: #667eea;
-      background: linear-gradient(135deg, #f0f3ff 0%, #e8ebff 100%);
-      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-      animation: pulse 0.5s ease-out;
-    }
-
-    .mode-btn .icon {
-      font-size: 64px;
-      margin-bottom: 20px;
-      display: inline-block;
-      animation: float 3s ease-in-out infinite;
-    }
-
-    .mode-btn h3 {
-      font-size: 24px;
-      margin-bottom: 10px;
-      color: var(--text-primary);
-    }
-
-    .mode-btn p {
-      font-size: 16px;
-      color: var(--text-secondary);
-    }
-
-    .input-group {
-      margin-bottom: 24px;
-    }
-
-    .input-group label {
-      display: block;
-      margin-bottom: 12px;
-      font-weight: 700;
-      color: var(--text-primary);
-      font-size: 16px;
-    }
-
-    .input-group input {
-      width: 100%;
-      padding: 16px 20px;
-      border: 3px solid var(--input-border);
-      border-radius: 12px;
-      font-size: 18px;
-      transition: all 0.3s;
-      background: var(--input-bg);
-      color: var(--text-primary);
-    }
-
-    .input-group input:focus {
-      outline: none;
-      border-color: #667eea;
-      background: var(--container-bg);
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-    }
-
-    .input-group input::placeholder {
-      color: var(--text-secondary);
-    }
-
-    .btn {
-      padding: 16px 40px;
-      border: none;
-      border-radius: 12px;
-      font-size: 18px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      display: inline-block;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
-      transform: translateX(-100%);
-    }
-
-    .btn:hover::before {
-      transform: translateX(100%);
-      animation: shimmer 0.6s;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
-    }
-
-    .btn-primary:active {
-      transform: translateY(0);
-    }
-
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none !important;
-    }
-
-    .btn-secondary {
-      background: var(--btn-secondary-bg);
-      color: var(--text-primary);
-      box-shadow: 0 4px 15px var(--shadow-color);
-    }
-
-    .btn-secondary:hover {
-      filter: brightness(0.95);
-    }
-
-    .connection-info {
-      background: var(--info-bg);
-      padding: 30px;
-      border-radius: 16px;
-      margin-bottom: 30px;
-      display: none;
-      animation: slideIn 0.4s ease-out;
-    }
-
-    .connection-info.show {
-      display: block;
-    }
-
-    .connection-info h4 {
-      color: #667eea;
-      margin-bottom: 20px;
-      font-size: 20px;
-      font-weight: 700;
-    }
-
-    .info-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 15px;
-      padding: 15px;
-      background: var(--container-bg);
-      border-radius: 12px;
-      box-shadow: 0 2px 8px var(--shadow-color);
-    }
-
-    .info-item label {
-      font-weight: 700;
-      margin-right: 15px;
-      min-width: 90px;
-      color: var(--text-primary);
-    }
-
-    .info-item .value {
-      flex: 1;
-      font-family: 'Consolas', 'Monaco', monospace;
-      color: #667eea;
-      font-size: 20px;
-      font-weight: 700;
-      word-break: break-all;
-    }
-
-    .info-item .copy-btn {
-      padding: 8px 16px;
-      font-size: 14px;
-      margin-left: 15px;
-    }
-
-    .file-area {
-      border: 3px dashed var(--input-border);
-      border-radius: 16px;
-      padding: 50px;
-      text-align: center;
-      margin-bottom: 30px;
-      transition: all 0.3s;
-      cursor: pointer;
-      background: var(--file-area-bg);
-    }
-
-    .file-area:hover {
-      border-color: #667eea;
-      background: var(--file-area-hover);
-      animation: glow 1.5s ease-in-out infinite;
-    }
-
-    .file-area.dragover {
-      border-color: #667eea;
-      background: var(--file-area-hover);
-      transform: scale(1.02);
-    }
-
-    .file-area.disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    .file-area.disabled:hover {
-      border-color: var(--input-border);
-      background: var(--file-area-bg);
-      animation: none;
-    }
-
-    .file-area .icon {
-      font-size: 80px;
-      margin-bottom: 20px;
-      display: inline-block;
-      animation: float 3s ease-in-out infinite;
-    }
-
-    .file-area h3 {
-      margin-bottom: 12px;
-      color: var(--text-primary);
-      font-size: 24px;
-    }
-
-    .file-area p {
-      color: var(--text-secondary);
-      font-size: 16px;
-    }
-
-    .status {
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 30px;
-      display: none;
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    .status.show {
-      display: block;
-      animation: slideIn 0.4s ease-out;
-    }
-
-    .status.connecting {
-      background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
-      color: #856404;
-      border-left: 4px solid #ffc107;
-    }
-
-    .status.connected {
-      background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-      color: #155724;
-      border-left: 4px solid #28a745;
-    }
-
-    .status.error {
-      background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-      color: #721c24;
-      border-left: 4px solid #dc3545;
-    }
-
-    .chat-section {
-      margin-top: 30px;
-      padding: 20px;
-      background: var(--info-bg);
-      border-radius: 16px;
-      animation: slideIn 0.4s ease-out;
-    }
-
-    .chat-messages {
-      min-height: 200px;
-      max-height: 400px;
-      overflow-y: auto;
-      padding: 15px;
-      background: var(--container-bg);
-      border-radius: 12px;
-      margin-bottom: 15px;
-      border: 2px solid var(--input-border);
-    }
-
-    .chat-message {
-      padding: 12px 16px;
-      margin-bottom: 10px;
-      border-radius: 12px;
-      max-width: 80%;
-      word-wrap: break-word;
-      animation: slideIn 0.3s ease-out;
-    }
-
-    .chat-message.sent {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      margin-left: auto;
-      text-align: right;
-    }
-
-    .chat-message.received {
-      background: var(--file-area-bg);
-      color: var(--text-primary);
-      margin-right: auto;
-    }
-
-    .chat-message .sender {
       font-size: 12px;
-      opacity: 0.8;
+      color: #666;
+    }
+
+    .main-container {
+      display: flex;
+      height: calc(100vh - 70px);
+      overflow: hidden;
+    }
+
+    /* 侧边栏 - 设备列表 */
+    .sidebar {
+      width: 300px;
+      background: white;
+      border-right: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 15px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .sidebar-header h3 {
+      font-size: 16px;
+      color: #333;
+    }
+
+    .connect-btn {
+      margin-top: 10px;
+      padding: 10px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      width: 100%;
+      transition: background 0.3s;
+    }
+
+    .connect-btn:hover {
+      background: #5568d3;
+    }
+
+    .qr-btn {
+      margin-top: 8px;
+      padding: 10px;
+      background: #764ba2;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      width: 100%;
+      transition: background 0.3s;
+    }
+
+    .qr-btn:hover {
+      background: #643d91;
+    }
+
+    .device-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .device-item {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: #f8f9fa;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 2px solid transparent;
+    }
+
+    .device-item:hover {
+      background: #e9ecef;
+    }
+
+    .device-item.active {
+      border-color: #667eea;
+      background: #eef1ff;
+    }
+
+    .device-item.connected {
+      border-color: #28a745;
+    }
+
+    .device-name {
+      font-weight: 600;
       margin-bottom: 4px;
     }
 
-    .chat-message .time {
-      font-size: 11px;
-      opacity: 0.6;
-      margin-top: 4px;
-    }
-
-    .chat-input-group {
+    .device-status {
+      font-size: 12px;
+      color: #666;
       display: flex;
-      gap: 10px;
-    }
-
-    .chat-input-group input {
-      flex: 1;
-      padding: 16px 20px;
-      border: 3px solid var(--input-border);
-      border-radius: 12px;
-      font-size: 18px;
-      background: var(--input-bg);
-      color: var(--text-primary);
-      transition: all 0.3s;
-    }
-
-    .chat-input-group input:focus {
-      outline: none;
-      border-color: #667eea;
-      background: var(--container-bg);
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-    }
-
-    .chat-input-group input::placeholder {
-      color: var(--text-secondary);
-    }
-
-    .mic-section {
-      margin-top: 30px;
-      padding: 20px;
-      background: var(--info-bg);
-      border-radius: 16px;
-      animation: slideIn 0.4s ease-out;
-    }
-
-    .mic-buttons {
-      display: flex;
-      gap: 15px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .mic-btn {
-      padding: 20px 40px;
-      border: none;
-      border-radius: 12px;
-      font-size: 18px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.3s;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 200px;
-      justify-content: center;
-    }
-
-    .mic-btn.idle {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    }
-
-    .mic-btn.idle:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
-    }
-
-    .mic-btn.active {
-      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-      color: white;
-      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
-      animation: pulse 2s infinite;
-    }
-
-    .mic-btn.active:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(220, 53, 69, 0.5);
-    }
-
-    .mic-status.recording {
-      background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-      color: #155724;
-    }
-
-    .mic-status.error {
-      background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-      color: #721c24;
-    }
-
-    .call-controls {
-      margin-top: 30px;
-      padding: 20px;
-      background: var(--info-bg);
-      border-radius: 16px;
-      animation: slideIn 0.4s ease-out;
-    }
-
-    .call-participants {
-      padding: 15px;
-      background: var(--container-bg);
-      border-radius: 12px;
-      margin-top: 15px;
-    }
-
-    .participant-tag {
-      padding: 8px 16px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border-radius: 20px;
-      font-size: 14px;
-      display: inline-flex;
       align-items: center;
       gap: 5px;
-      animation: slideIn 0.3s ease-out;
     }
 
-    .call-status {
-      padding: 15px;
-      border-radius: 12px;
-      margin-top: 15px;
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ccc;
     }
 
-    .call-status.connecting {
-      background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
-      color: #856404;
+    .status-dot.online {
+      background: #28a745;
     }
 
-    .call-status.connected {
-      background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-      color: #155724;
-    }
-
-    .call-status.ended {
-      background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-      color: #721c24;
-    }
-
-    .call-status.incoming {
-      background: linear-gradient(135deg, #cce5ff 0%, #b3d4ff 100%);
-      color: #004085;
-    }
-
-    .call-buttons {
+    .device-actions {
+      margin-top: 8px;
       display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-      justify-content: center;
+      gap: 8px;
     }
 
-    .call-btn {
-      padding: 20px 40px;
+    .device-action-btn {
+      flex: 1;
+      padding: 6px;
       border: none;
-      border-radius: 12px;
-      font-size: 18px;
-      font-weight: 700;
+      border-radius: 4px;
       cursor: pointer;
-      transition: all 0.3s;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 160px;
-      justify-content: center;
+      font-size: 12px;
+      background: #667eea;
+      color: white;
     }
 
-    .call-btn.primary {
+    .device-action-btn.disconnect {
+      background: #dc3545;
+    }
+
+    /* 聊天区域 */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #f5f5f5;
+    }
+
+    .chat-header {
+      padding: 15px 20px;
+      background: white;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-header h3 {
+      font-size: 18px;
+      color: #333;
+    }
+
+    .chat-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .control-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .video-btn {
+      background: #667eea;
+      color: white;
+    }
+
+    .video-btn:hover {
+      background: #5568d3;
+    }
+
+    .audio-btn {
+      background: #28a745;
+      color: white;
+    }
+
+    .audio-btn:hover {
+      background: #218838;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .message {
+      margin-bottom: 15px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message-content {
+      max-width: 70%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      position: relative;
+    }
+
+    .message.sent {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .message.sent .message-content {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      border-bottom-right-radius: 4px;
     }
 
-    .call-btn.primary:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
-    }
-
-    .call-btn.danger {
-      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-      color: white;
-      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
-    }
-
-    .call-btn.danger:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(220, 53, 69, 0.5);
-    }
-
-    .call-btn.success {
-      background: linear-gradient(135deg, #28a745 0%, #218838 100%);
-      color: white;
-      box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
-    }
-
-    .call-btn.success:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(40, 167, 69, 0.5);
-    }
-
-    .remote-video-container {
-      position: relative;
-      margin-top: 20px;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    }
-
-    .remote-video-container video {
-      width: 100%;
-      max-height: 480px;
-      background: #000;
-    }
-
-    .local-video-container {
-      position: relative;
-    }
-
-    .local-video-container video {
-      width: 200px;
-      height: 150px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-      border: 3px solid white;
-    }
-
-    .file-list {
-      margin-top: 30px;
-    }
-
-    .file-item {
+    .message.received {
       display: flex;
+      justify-content: flex-start;
+    }
+
+    .message.received .message-content {
+      background: white;
+      color: #333;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .message-time {
+      font-size: 11px;
+      margin-top: 5px;
+      opacity: 0.7;
+    }
+
+    .message-sender {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #666;
+    }
+
+    .chat-input-area {
+      padding: 15px 20px;
+      background: white;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .input-container {
+      display: flex;
+      gap: 10px;
       align-items: center;
-      padding: 20px;
-      background: var(--file-item-bg);
-      border-radius: 12px;
-      margin-bottom: 15px;
-      box-shadow: 0 2px 8px var(--shadow-color);
+    }
+
+    #message-input {
+      flex: 1;
+      padding: 12px 20px;
+      border: 2px solid #e0e0e0;
+      border-radius: 25px;
+      font-size: 16px;
+      resize: none;
+      height: 50px;
       transition: all 0.3s;
     }
 
-    .file-item:hover {
-      transform: translateX(5px);
-      box-shadow: 0 4px 12px var(--shadow-color);
+    #message-input:focus {
+      outline: none;
+      border-color: #667eea;
     }
 
-    .file-item .icon {
-      font-size: 48px;
-      margin-right: 20px;
+    .send-btn {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
     }
 
-    .file-item .info {
-      flex: 1;
+    .send-btn:hover {
+      transform: scale(1.05);
     }
 
-    .file-item .info .name {
-      font-weight: 700;
-      margin-bottom: 8px;
-      color: var(--text-primary);
-      font-size: 18px;
+    /* 文件发送区域 */
+    .file-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
     }
 
-    .file-item .info .size {
+    .file-btn {
+      padding: 8px 12px;
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
       font-size: 14px;
-      color: var(--text-secondary);
+      transition: all 0.3s;
     }
 
-    .file-item .download-btn {
-      padding: 10px 20px;
-      font-size: 16px;
+    .file-btn:hover {
+      background: #5a6268;
     }
 
-    .tv-notice {
-      background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
-      border-left: 4px solid #ffc107;
-      padding: 20px;
+    .send-all-btn {
+      padding: 8px 12px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .send-all-btn:hover {
+      background: #218838;
+    }
+
+    .drop-zone {
+      border: 3px dashed #667eea;
       border-radius: 12px;
-      margin-bottom: 30px;
+      padding: 30px;
+      text-align: center;
+      background: #f8f9fa;
+      transition: all 0.3s;
+      margin: 10px 0;
       display: none;
     }
 
-    .tv-notice.show {
+    .drop-zone.active {
       display: block;
-      animation: slideIn 0.4s ease-out;
+      background: #eef1ff;
     }
 
-    .tv-notice h4 {
-      color: #856404;
-      margin-bottom: 10px;
-      font-size: 18px;
+    .drop-zone.dragover {
+      background: #667eea;
+      color: white;
     }
 
-    .tv-notice p {
-      color: #856404;
+    /* 麦克风按钮 */
+    .mic-btn {
+      padding: 12px;
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      transition: all 0.3s;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mic-btn.active {
+      background: #28a745;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+      }
+      50% {
+        box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+      }
+    }
+
+    .mic-btn:hover {
+      transform: scale(1.1);
+    }
+
+    /* 视频通话弹窗 */
+    .call-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      text-align: center;
+      display: none;
+    }
+
+    .call-popup.active {
+      display: block;
+    }
+
+    .call-popup h3 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .call-popup .call-info {
+      margin-bottom: 20px;
+      color: #666;
+    }
+
+    .call-popup-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+
+    .call-popup-btn {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .call-popup-btn.accept {
+      background: #28a745;
+      color: white;
+    }
+
+    .call-popup-btn.reject {
+      background: #dc3545;
+      color: white;
+    }
+
+    /* 视频通话界面 */
+    .call-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #000;
+      z-index: 2000;
+      display: none;
+    }
+
+    .call-screen.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .call-videos {
+      flex: 1;
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .video-container {
+      flex: 1;
+      background: #222;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .video-container video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .video-label {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
       font-size: 14px;
-      line-height: 1.6;
     }
 
+    .call-controls {
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .call-control-btn {
+      padding: 15px 25px;
+      border: none;
+      border-radius: 50px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .call-control-btn.mute {
+      background: #6c757d;
+      color: white;
+    }
+
+    .call-control-btn.mute.active {
+      background: #dc3545;
+    }
+
+    .call-control-btn.camera {
+      background: #6c757d;
+      color: white;
+    }
+
+    .call-control-btn.camera.active {
+      background: #dc3545;
+    }
+
+    .call-control-btn.hangup {
+      background: #dc3545;
+      color: white;
+    }
+
+    /* 二维码弹窗 */
+    .qr-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .qr-modal.active {
+      display: flex;
+    }
+
+    .qr-content {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      text-align: center;
+    }
+
+    .qr-content h3 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    #qr-code {
+      margin: 20px 0;
+    }
+
+    .qr-content p {
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    .close-btn {
+      padding: 10px 30px;
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    /* 响应式设计 */
     @media (max-width: 768px) {
-      .container {
-        border-radius: 0;
+      .sidebar {
+        position: fixed;
+        left: -300px;
+        top: 70px;
+        height: calc(100vh - 70px);
+        z-index: 50;
+        transition: left 0.3s;
       }
 
-      .mode-selector {
-        grid-template-columns: 1fr;
+      .sidebar.open {
+        left: 0;
       }
 
-      .mode-btn {
-        padding: 40px 20px;
-      }
-
-      .mode-btn .icon {
-        font-size: 56px;
-      }
-
-      .mode-btn h3 {
-        font-size: 20px;
-      }
-
-      .header h1 {
-        font-size: 28px;
-      }
-
-      .input-group input {
-        font-size: 20px;
-        padding: 18px;
-      }
-
-      .btn {
-        font-size: 20px;
-        padding: 18px 40px;
-        width: 100%;
-      }
-
-      .info-item {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .info-item label {
-        font-size: 18px;
-        margin-bottom: 10px;
-      }
-
-      .info-item .value {
-        width: 100%;
+      .mobile-menu-btn {
+        display: block;
+        padding: 8px;
+        background: none;
+        border: none;
         font-size: 24px;
-        padding: 12px;
+        cursor: pointer;
       }
 
-      .info-item .copy-btn {
-        margin-left: 0;
-        margin-top: 12px;
-        width: 100%;
-      }
-
-      .file-area {
-        padding: 40px 20px;
-      }
-
-      .file-area .icon {
-        font-size: 64px;
-      }
-
-      .file-area h3 {
-        font-size: 20px;
-      }
-
-      .file-area p {
-        font-size: 16px;
-      }
-
-      .file-item {
+      .main-container {
         flex-direction: column;
-        align-items: flex-start;
       }
 
-      .file-item .icon {
-        margin-right: 0;
-        margin-bottom: 12px;
-      }
-
-      .file-item .download-btn {
+      .chat-area {
         width: 100%;
-        margin-top: 12px;
       }
+
+      .message-content {
+        max-width: 85%;
+      }
+
+      .setup-container {
+        padding: 25px;
+        border-radius: 15px;
+      }
+
+      .setup-container h1 {
+        font-size: 1.5rem;
+      }
+
+      .header {
+        padding: 10px 15px;
+      }
+
+      .user-avatar {
+        width: 35px;
+        height: 35px;
+      }
+    }
+
+    @media (min-width: 769px) {
+      .mobile-menu-btn {
+        display: none;
+      }
+    }
+
+    /* 提示信息 */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 15px 25px;
+      background: #333;
+      color: white;
+      border-radius: 10px;
+      z-index: 3000;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+
+    .empty-state svg {
+      width: 100px;
+      height: 100px;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+
+    .empty-state h3 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .empty-state p {
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <!-- 初始化界面 -->
+  <div id="setup-screen">
+    <div class="setup-container">
+      <h1>P2P实时通信</h1>
+      <div class="form-group">
+        <label for="device-type">设备类型</label>
+        <select id="device-type">
+          <option value="pc">电脑端</option>
+          <option value="mobile">手机端</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="nickname">设置昵称</label>
+        <input type="text" id="nickname" placeholder="请输入您的昵称" maxlength="20">
+      </div>
+      <button class="setup-btn" onclick="startApp()">确定</button>
+    </div>
+  </div>
+
+  <!-- 主界面 -->
+  <div id="main-screen">
     <div class="header">
-      <h1>🌍 跨地域 P2P 文件传输</h1>
-      <p>福建 ↔ 山东 ↔ 全国，只要有网络就能传输</p>
+      <div class="user-info">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+        <div class="user-avatar" id="user-avatar"></div>
+        <span id="display-nickname"></span>
+        <span class="device-type" id="display-device-type"></span>
+      </div>
     </div>
 
-    <div class="content">
-      <!-- 电视端提示 -->
-      <div class="tv-notice" id="tv-notice">
-        <h4>⚠️ 检测到电视浏览器</h4>
-        <p>电视浏览器可能不完全支持跨地域传输。建议使用手机、电脑或平板进行传输。如果一定要在电视上使用，建议使用 Chrome TV 版本。</p>
-      </div>
-
-      <!-- 昵称设置 -->
-      <div class="nickname-section">
-        <h4>👤 设置昵称</h4>
-        <div class="nickname-input-group">
-          <input type="text" id="nickname-input" placeholder="输入你的昵称(例如: 小明)" maxlength="20">
-          <button class="btn btn-primary" onclick="setNickname()">确定</button>
+    <div class="main-container">
+      <!-- 侧边栏 - 设备列表 -->
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <h3>设备列表</h3>
+          <button class="connect-btn" onclick="scanDevices()">🔍 连接设备</button>
+          <button class="qr-btn" onclick="showQRCode()">📱 二维码连接</button>
         </div>
-
-        <!-- 自动连接设置 -->
-        <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid var(--input-border);">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-            <label style="font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-              <input type="checkbox" id="auto-connect-checkbox" onchange="toggleAutoConnect()">
-              <span>启用自动连接</span>
-            </label>
-            <span style="font-size: 12px; color: var(--text-secondary);">连续连接3次后自动连接</span>
-          </div>
-          <div id="auto-connect-info" style="display: none; padding: 12px; background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border-radius: 8px; font-size: 13px; color: #155724;">
-            <p style="margin: 0;">💡 自动连接已启用,下次访问时会自动选择模式并连接到常用设备</p>
+        <div class="device-list" id="device-list">
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+            </svg>
+            <h3>暂无连接设备</h3>
+            <p>点击上方按钮开始连接</p>
           </div>
         </div>
       </div>
-
-      <!-- 模式选择 -->
-      <div class="mode-selector" id="mode-selector">
-        <div class="mode-btn" onclick="selectMode('sender')" id="sender-btn">
-          <div class="icon">📤</div>
-          <h3>发送端</h3>
-          <p>发送文件到对方</p>
-        </div>
-        <div class="mode-btn" onclick="selectMode('receiver')" id="receiver-btn">
-          <div class="icon">📥</div>
-          <h3>接收端</h3>
-          <p>接收文件</p>
-        </div>
-        <div class="mode-btn" onclick="selectMode('multi')" id="multi-btn">
-          <div class="icon">👥</div>
-          <h3>多人模式</h3>
-          <p>多设备同时连接</p>
-        </div>
-      </div>
-
-      <!-- 连接信息 -->
-      <div class="connection-info" id="connection-info">
-        <h4>🔗 连接信息</h4>
-        <div class="info-item">
-          <label>你的 ID:</label>
-          <input type="text" class="value" id="local-id" readonly>
-          <button class="btn btn-secondary copy-btn" onclick="copyToClipboard('local-id')">复制</button>
-        </div>
-        <div class="input-group" style="margin-top: 20px;">
-          <label>对方 ID:</label>
-          <input type="text" id="remote-id" placeholder="粘贴对方的 ID（例如：aB3dE9）">
-        </div>
-        <button class="btn btn-primary" onclick="connect()" id="connect-btn" disabled>连接</button>
-      </div>
-
-      <!-- 状态 -->
-      <div class="status" id="status"></div>
 
       <!-- 聊天区域 -->
-      <div class="chat-section" id="chat-section">
-        <h4>💬 文字聊天</h4>
-        <div class="chat-messages" id="chat-messages"></div>
-        <div class="chat-input-group">
-          <input type="text" id="chat-input" placeholder="输入消息..." onkeypress="if(event.key==='Enter')sendMessage()">
-          <button class="btn btn-primary" onclick="sendMessage()">发送</button>
-        </div>
-      </div>
-
-      <!-- 麦克风喊话模式 -->
-      <div class="mic-section" id="mic-section">
-        <h4>🎤 麦克风喊话模式</h4>
-        <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 14px;">开启后,你说的每一句话都会实时传送到所有连接的设备</p>
-        <div class="mic-buttons">
-          <button class="mic-btn idle" id="mic-toggle-btn" onclick="toggleMicrophone()">
-            <span id="mic-btn-icon">🎙️</span>
-            <span id="mic-btn-text">开启麦克风</span>
-          </button>
-          <button class="btn btn-secondary" onclick="toggleMute()" id="mute-btn">
-            🔇 静音
-          </button>
-        </div>
-        <div class="status" id="mic-status" style="display: none; margin-top: 15px;"></div>
-      </div>
-
-      <!-- 文件上传区域 -->
-      <div class="file-area" id="file-area" onclick="document.getElementById('file-input').click()">
-        <div class="icon">📁</div>
-        <h3>拖拽文件到这里</h3>
-        <p>或点击选择文件（支持任意大小）</p>
-        <input type="file" id="file-input" multiple style="display: none;">
-      </div>
-
-      <!-- 文件列表 -->
-      <div class="file-list" id="file-list"></div>
-
-      <!-- 通话控制区域 -->
-      <div class="call-controls" id="call-controls" style="display: none;">
-        <h4 style="color: #667eea; margin-bottom: 15px; font-size: 18px; font-weight: 700;">📞 通话功能</h4>
-        <div class="call-buttons">
-          <button class="call-btn primary" onclick="startVoiceCall()" id="voice-call-btn">
-            🎤 语音通话
-          </button>
-          <button class="call-btn primary" onclick="startVideoCall()" id="video-call-btn">
-            📹 视频通话
-          </button>
-          <button class="call-btn success" onclick="inviteToCall()" id="invite-btn" style="display: none;">
-            📨 邀请加入
-          </button>
-          <button class="call-btn danger" onclick="endCall()" id="end-call-btn" style="display: none;">
-            📵 挂断
-          </button>
-        </div>
-
-        <!-- 通话状态 -->
-        <div class="call-status" id="call-status" style="display: none; margin-top: 15px;">
-          <span id="call-status-text"></span>
-        </div>
-
-        <!-- 通话参与者列表 -->
-        <div class="call-participants" id="call-participants" style="display: none; margin-top: 15px;">
-          <h5 style="color: #667eea; margin-bottom: 10px; font-size: 16px; font-weight: 700;">👥 通话参与者</h5>
-          <div id="participants-list" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
-        </div>
-
-        <!-- 视频容器 -->
-        <div id="video-wrapper" style="position: relative; width: 100%; display: none; margin-top: 20px;">
-          <!-- 远程视频网格 -->
-          <div class="remote-videos-grid" id="remote-videos-grid" style="display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
-          </div>
-
-          <!-- 本地视频显示 -->
-          <div class="local-video-container" id="local-video-container">
-            <video id="local-video" autoplay playsinline muted></video>
+      <div class="chat-area">
+        <div class="chat-header">
+          <h3 id="current-chat-title">选择一个设备开始聊天</h3>
+          <div class="chat-controls">
+            <button class="control-btn video-btn" onclick="startVideoCall()">📹 视频通话</button>
+            <button class="control-btn audio-btn" onclick="startAudioCall()">📞 语音通话</button>
           </div>
         </div>
-      </div>
 
-      <!-- 底部链接 -->
-      <div class="footer">
-        <div class="footer-links">
-          <a href="mailto:3530388417@qq.com" class="footer-link">
-            <span class="icon">📧</span>
-            <span>联系开发者</span>
-          </a>
-          <a href="https://qm.qq.com/q/zQn8MgrIDS" target="_blank" class="footer-link">
-            <span class="icon">💬</span>
-            <span>加入 QQ 群</span>
-          </a>
+        <div class="messages" id="messages">
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+            </svg>
+            <h3>开始聊天</h3>
+            <p>选择左侧设备或发送消息</p>
+          </div>
+        </div>
+
+        <div class="drop-zone" id="drop-zone">
+          <p>📁 拖放文件到此处发送</p>
+        </div>
+
+        <div class="chat-input-area">
+          <div class="input-container">
+            <button class="mic-btn" id="mic-btn" onclick="toggleMicrophone()" title="麦克风">🎤</button>
+            <div class="file-controls">
+              <button class="file-btn" onclick="showFileInput()" title="选择文件">📎</button>
+              <button class="send-all-btn" onclick="toggleSendAll()" id="send-all-btn" title="发送到全部设备">发送到全部</button>
+              <input type="file" id="file-input" style="display: none;" onchange="handleFileSelect(event)">
+            </div>
+            <textarea id="message-input" placeholder="输入消息..." onkeypress="handleKeyPress(event)"></textarea>
+            <button class="send-btn" onclick="sendMessage()">发送</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 主题切换按钮 -->
-  <button class="theme-toggle" onclick="toggleTheme()" id="theme-toggle">
-    <span id="theme-icon">🌙</span>
-  </button>
+  <!-- 视频通话弹窗 -->
+  <div class="call-popup" id="call-popup">
+    <h3 id="call-popup-title">来电</h3>
+    <p class="call-info" id="call-popup-info">正在与您通话...</p>
+    <div class="call-popup-buttons">
+      <button class="call-popup-btn accept" onclick="acceptCall()">接受</button>
+      <button class="call-popup-btn reject" onclick="rejectCall()">拒绝</button>
+    </div>
+  </div>
 
-  <!-- 引入 PeerJS -->
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <!-- 视频通话界面 -->
+  <div class="call-screen" id="call-screen">
+    <div class="call-videos">
+      <div class="video-container">
+        <video id="local-video" autoplay muted playsinline></video>
+        <span class="video-label">我</span>
+      </div>
+      <div class="video-container">
+        <video id="remote-video" autoplay playsinline></video>
+        <span class="video-label">对方</span>
+      </div>
+    </div>
+    <div class="call-controls">
+      <button class="call-control-btn mute" id="mute-btn" onclick="toggleMute()">🔊 静音</button>
+      <button class="call-control-btn camera" id="camera-btn" onclick="toggleCamera()">📷 关闭摄像头</button>
+      <button class="call-control-btn hangup" onclick="hangupCall()">📞 挂断</button>
+    </div>
+  </div>
+
+  <!-- 二维码弹窗 -->
+  <div class="qr-modal" id="qr-modal">
+    <div class="qr-content">
+      <h3>扫码连接</h3>
+      <div id="qr-code"></div>
+      <p>使用手机扫描二维码即可快速连接</p>
+      <button class="close-btn" onclick="closeQRModal()">关闭</button>
+    </div>
+  </div>
+
   <script>
-    // 检测浏览器兼容性
-    function checkBrowserSupport() {
-      const issues = [];
-
-      // 检测 WebRTC 支持
-      if (!window.RTCPeerConnection && !window.webkitRTCPeerConnection && !window.mozRTCPeerConnection) {
-        issues.push('您的浏览器不支持 WebRTC');
-      }
-
-      // 检测 FileReader 支持
-      if (!window.FileReader) {
-        issues.push('您的浏览器不支持文件读取');
-      }
-
-      // 检测是否是电视浏览器
-      const userAgent = navigator.userAgent.toLowerCase();
-      if (userAgent.includes('tv') || userAgent.includes('television') || userAgent.includes('tizen')) {
-        document.getElementById('tv-notice').classList.add('show');
-      }
-
-      return issues;
-    }
-
-    let peer = null;
-    let connections = {}; // 多连接支持
-    let mode = null;
-    let browserSupportIssues = [];
-    let currentCalls = {}; // 多通话支持
-    let localStream = null;
-    let remoteStreams = {}; // 远程流存储
-    let isInCall = false;
-    let currentCallType = null; // 'voice' or 'video'
-    let callParticipants = {}; // 通话参与者
-    let myNickname = '匿名用户';
-    let isMicEnabled = false;
+    // 全局变量
+    let ws = null;
+    let clientId = null;
+    let myNickname = '';
+    let myDeviceType = '';
+    let connectedDevices = {};
+    let currentChatDeviceId = null;
+    let sendToAll = false;
+    let microphoneEnabled = false;
     let mediaRecorder = null;
-    let audioContext = null;
-    let analyser = null;
+    let audioChunks = [];
+    let localStream = null;
+    let remoteStream = null;
+    let peerConnection = null;
+    let callIncoming = null;
     let isMuted = false;
-    let mediaElement = null;
+    let isCameraOff = false;
 
-    // 自动连接相关
-    let autoConnectEnabled = false;
-    let frequentDevices = {}; // 记录频繁连接的设备 {peerId: {count: 3, lastConnect: timestamp}}
-    const AUTO_CONNECT_THRESHOLD = 3; // 连接次数阈值
-    const AUTO_CONNECT_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7天过期
+    const config = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]
+    };
 
-    // 页面加载时检查兼容性
-    window.addEventListener('DOMContentLoaded', function() {
-      browserSupportIssues = checkBrowserSupport();
+    // 初始化应用
+    function startApp() {
+      const deviceType = document.getElementById('device-type').value;
+      const nickname = document.getElementById('nickname').value.trim();
 
-      if (browserSupportIssues.length > 0) {
-        const statusDiv = document.getElementById('status');
-        statusDiv.innerHTML = browserSupportIssues.map(issue => '⚠️ ' + issue).join('<br>');
-        statusDiv.className = 'status show error';
-
-        document.getElementById('mode-selector').style.opacity = '0.5';
-        document.getElementById('mode-selector').style.pointerEvents = 'none';
-      }
-
-      // 加载自动连接设置
-      loadAutoConnectSettings();
-      loadSavedNickname();
-    });
-
-    // 选择模式
-    function selectMode(selectedMode) {
-      mode = selectedMode;
-
-      document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(selectedMode + '-btn').classList.add('active');
-
-      document.getElementById('connection-info').classList.add('show');
-
-      initPeer();
-    }
-
-    // 初始化 Peer
-    function initPeer() {
-      if (browserSupportIssues.length > 0) {
-        showStatus('❌ 浏览器不兼容', 'error');
+      if (!nickname) {
+        showToast('请输入昵称');
         return;
       }
 
-      showStatus('⏳ 正在初始化 P2P 连接...', 'connecting');
+      myDeviceType = deviceType;
+      myNickname = nickname;
 
-      // 生成6位短ID
-      const shortId = generateShortId();
+      // 保存到本地存储
+      localStorage.setItem('nickname', nickname);
+      localStorage.setItem('deviceType', deviceType);
 
-      try {
-        peer = new Peer(shortId, {
-          debug: 1
-        });
+      // 切换到主界面
+      document.getElementById('setup-screen').style.display = 'none';
+      document.getElementById('main-screen').style.display = 'block';
 
-        peer.on('open', (id) => {
-          document.getElementById('local-id').value = id;
-          document.getElementById('connect-btn').disabled = false;
-          showStatus('✅ 已准备好！你的 ID: <strong>' + id + '</strong><br>把这个 ID 发给对方即可开始传输', 'connected');
-          console.log('My peer ID is: ' + id);
-        });
+      // 更新用户信息显示
+      document.getElementById('display-nickname').textContent = nickname;
+      document.getElementById('display-device-type').textContent = deviceType === 'pc' ? '电脑' : '手机';
+      document.getElementById('user-avatar').textContent = nickname.charAt(0).toUpperCase();
 
-        peer.on('connection', (connection) => {
-          conn = connection;
-          setupConnection();
+      // 连接WebSocket
+      connectWebSocket();
+    }
 
-          showStatus('✅ 有人连接到你了！', 'connected');
-          console.log('Incoming connection from ' + conn.peer);
-        });
+    // 连接WebSocket
+    function connectWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.host;
+      const role = 'sender';
 
-        peer.on('error', (err) => {
-          if (err.type === 'peer-unavailable') {
-            showStatus('❌ 找不到对方 ID，请检查 ID 是否正确', 'error');
-          } else if (err.type === 'network') {
-            showStatus('❌ 网络错误，请检查网络连接', 'error');
-          } else {
-            showStatus('❌ 错误: ' + err.message, 'error');
+      ws = new WebSocket(`${protocol}//${host}?role=${role}`);
+
+      ws.onopen = () => {
+        console.log('WebSocket连接成功');
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          handleWebSocketMessage(data);
+        } catch (error) {
+          console.error('消息解析错误:', error);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket错误:', error);
+        showToast('连接错误,请刷新页面');
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket连接关闭');
+        setTimeout(() => {
+          if (document.getElementById('main-screen').style.display === 'block') {
+            connectWebSocket();
           }
-          console.error('Peer error:', err);
-        });
-      } catch (error) {
-        showStatus('❌ 初始化失败: ' + error.message, 'error');
-        console.error('Init error:', error);
-      }
+        }, 3000);
+      };
     }
 
-    // 生成6位短ID（数字+字母）
-    function generateShortId() {
-      const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      let result = '';
-      for (let i = 0; i < 6; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return result;
-    }
+    // 处理WebSocket消息
+    function handleWebSocketMessage(data) {
+      switch (data.type) {
+        case 'connected':
+          clientId = data.clientId;
+          console.log('已连接,客户端ID:', clientId);
+          break;
 
-    // 检查 PeerJS 是否加载成功
-    if (typeof Peer === 'undefined') {
-      document.addEventListener('DOMContentLoaded', function() {
-        showStatus('❌ PeerJS 加载失败，请检查网络连接', 'error');
-        document.getElementById('mode-selector').style.opacity = '0.5';
-        document.getElementById('mode-selector').style.pointerEvents = 'none';
-      });
-    }
+        case 'connection_request':
+          handleConnectionRequest(data.senderId);
+          break;
 
-    // 主题切换功能
-    function toggleTheme() {
-      document.body.classList.toggle('dark-mode');
-      const themeIcon = document.getElementById('theme-icon');
+        case 'connection_accepted':
+          handleConnectionAccepted(data.receiverId);
+          break;
 
-      if (document.body.classList.contains('dark-mode')) {
-        themeIcon.textContent = '☀️';
-        localStorage.setItem('theme', 'dark');
-      } else {
-        themeIcon.textContent = '🌙';
-        localStorage.setItem('theme', 'light');
-      }
-    }
+        case 'connection_established':
+          handleConnectionEstablished(data.senderId);
+          break;
 
-    // 加载保存的主题
-    document.addEventListener('DOMContentLoaded', function() {
-      const savedTheme = localStorage.getItem('theme');
-      if (savedTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-        document.getElementById('theme-icon').textContent = '☀️';
-      }
-    });
+        case 'connection_failed':
+          showToast('连接失败: ' + data.reason);
+          break;
 
-    // 连接到对方
-    function connect() {
-      const remoteId = document.getElementById('remote-id').value.trim();
-
-      if (!remoteId) {
-        alert('请输入对方 ID');
-        return;
-      }
-
-      if (!peer) {
-        alert('请先选择模式');
-        return;
-      }
-
-      if (remoteId === document.getElementById('local-id').value) {
-        alert('不能连接自己的 ID');
-        return;
-      }
-
-      showStatus('⏳ 正在连接对方...', 'connecting');
-
-      conn = peer.connect(remoteId);
-      setupConnection();
-    }
-
-    // 设置连接
-    function setupConnection() {
-      conn.on('open', () => {
-        showStatus('✅ 连接成功！可以传输文件了', 'connected');
-        document.getElementById('file-area').classList.remove('disabled');
-        document.getElementById('call-controls').style.display = 'block';
-        console.log('Connection established');
-      });
-
-      conn.on('data', (data) => {
-        console.log('Received data:', data);
-
-        if (data.type === 'file') {
-          handleFile(data);
-        } else if (data.type === 'message') {
-          // 处理聊天消息
-          addChatMessage(data.message, 'received', data.sender || '匿名用户');
-          showStatus('💬 收到新消息', 'connected');
-          // 移动端震动提示
-          if (navigator.vibrate) {
-            navigator.vibrate(200);
+        case 'message':
+          if (data.to === clientId || data.to === 'all') {
+            addChatMessage(data.from, data.content, data.fromNickname, false);
           }
-        } else if (data.type === 'audio') {
-          // 处理音频数据
-          handleAudio(data.audioData);
-        } else if (data.type === 'call') {
+          break;
+
+        case 'audio':
+          handleAudioData(data);
+          break;
+
+        case 'peer_disconnected':
+          handlePeerDisconnected(data.disconnectedId);
+          break;
+
+        case 'webrtc_offer':
+          handleWebRTCOffer(data);
+          break;
+
+        case 'webrtc_answer':
+          handleWebRTCAnswer(data);
+          break;
+
+        case 'webrtc_ice_candidate':
+          handleWebRTCIceCandidate(data);
+          break;
+
+        case 'call_request':
           handleIncomingCall(data);
-        } else if (data.type === 'call-answer') {
-          handleCallAnswer(data);
-        } else if (data.type === 'call-reject') {
-          handleCallReject();
-        } else if (data.type === 'call-end') {
-          handleCallEnd();
-        }
-      });
+          break;
 
-      conn.on('close', () => {
-        showStatus('❌ 连接已断开', 'error');
-        document.getElementById('file-area').classList.add('disabled');
-        document.getElementById('call-controls').style.display = 'none';
-        conn = null;
-        if (isInCall) {
-          endCall();
-        }
-      });
+        case 'call_accepted':
+          handleCallAccepted(data);
+          break;
 
-      conn.on('error', (err) => {
-        showStatus('❌ 连接错误: ' + err.message, 'error');
-        console.error('Connection error:', err);
-      });
-    }
+        case 'call_rejected':
+          handleCallRejected(data);
+          break;
 
-    // 发送文件
-    function sendFile(file) {
-      if (!conn || conn.open !== true) {
-        alert('请先建立连接');
-        return;
-      }
-
-      showStatus('⏳ 正在发送文件: ' + file.name + '...', 'connecting');
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const fileData = {
-          type: 'file',
-          name: file.name,
-          size: file.size,
-          mimeType: file.type,
-          data: e.target.result
-        };
-
-        conn.send(fileData);
-
-        addFileToList({
-          name: file.name,
-          size: file.size,
-          sent: true
-        });
-
-        showStatus('✅ 文件已发送: ' + file.name, 'connected');
-      };
-
-      reader.onerror = function() {
-        showStatus('❌ 读取文件失败', 'error');
-      };
-
-      reader.readAsDataURL(file);
-    }
-
-    // 处理接收的文件
-    function handleFile(fileData) {
-      const file = {
-        name: fileData.name,
-        size: fileData.size,
-        mimeType: fileData.mimeType,
-        data: fileData.data,
-        received: true
-      };
-
-      addFileToList(file);
-      showStatus('✅ 收到文件: ' + fileData.name, 'connected');
-
-      // 移动端震动提示
-      if (navigator.vibrate) {
-        navigator.vibrate([200, 100, 200]);
+        case 'call_ended':
+          handleCallEnded();
+          break;
       }
     }
 
-    // 存储接收的文件数据
-    const receivedFiles = {};
-
-    // 添加到文件列表
-    function addFileToList(file) {
-      const list = document.getElementById('file-list');
-      const item = document.createElement('div');
-      item.className = 'file-item';
-
-      const icon = getFileIcon(file.name);
-      const size = formatSize(file.size);
-      const fileId = file.name + '_' + Date.now();
-
-      if (file.received) {
-        receivedFiles[fileId] = file.data;
-      }
-
-      item.innerHTML = `
-        <div class="icon">${icon}</div>
-        <div class="info">
-          <div class="name">${file.name}</div>
-          <div class="size">${size}</div>
-        </div>
-        ${file.received ? `<button class="btn btn-secondary download-btn" onclick="downloadFile('${fileId}', '${file.name}')">📥 下载</button>` : '<span style="color: #28a745; font-weight: 700;">✅ 已发送</span>'}
-      `;
-
-      list.appendChild(item);
-    }
-
-    // 下载文件
-    function downloadFile(fileId, fileName) {
-      const fileData = receivedFiles[fileId];
-      if (!fileData) {
-        alert('文件数据不存在');
-        return;
-      }
-
-      const link = document.createElement('a');
-      link.href = fileData;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    // 获取文件图标
-    function getFileIcon(fileName) {
-      const ext = fileName.split('.').pop().toLowerCase();
-      const icons = {
-        'pdf': '📄',
-        'doc': '📝', 'docx': '📝',
-        'xls': '📊', 'xlsx': '📊',
-        'ppt': '📽️', 'pptx': '📽️',
-        'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🖼️', 'webp': '🖼️',
-        'mp4': '🎬', 'avi': '🎬', 'mkv': '🎬', 'mov': '🎬', 'wmv': '🎬',
-        'mp3': '🎵', 'wav': '🎵', 'flac': '🎵', 'aac': '🎵',
-        'zip': '📦', 'rar': '📦', '7z': '📦', 'tar': '📦', 'gz': '📦',
-        'txt': '📃', 'md': '📃',
-        'js': '⚙️', 'html': '🌐', 'css': '🎨', 'json': '📋', 'xml': '📋',
-        'apk': '📱', 'ipa': '📱', 'exe': '💻',
-        'iso': '💿', 'img': '💿'
-      };
-      return icons[ext] || '📄';
-    }
-
-    // 格式化大小
-    function formatSize(bytes) {
-      if (bytes === 0) return '0 B';
-      const k = 1024;
-      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    // 复制到剪贴板
-    function copyToClipboard(elementId) {
-      const el = document.getElementById(elementId);
-
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(el.value)
-          .then(() => {
-            showStatus('✅ 已复制到剪贴板！', 'connected');
-          })
-          .catch(err => {
-            fallbackCopy(el);
-          });
-      } else {
-        fallbackCopy(el);
-      }
-    }
-
-    // 降级复制方案
-    function fallbackCopy(element) {
+    // 扫描设备
+    async function scanDevices() {
       try {
-        element.select();
-        element.setSelectionRange(0, 99999);
-        const successful = document.execCommand('copy');
-        if (successful) {
-          showStatus('✅ 已复制到剪贴板！', 'connected');
+        const response = await fetch('/api/receivers');
+        const data = await response.json();
+
+        if (data.receivers && data.receivers.length > 0) {
+          updateDeviceList(data.receivers);
+          showToast(`发现 ${data.receivers.length} 个设备`);
         } else {
-          showStatus('❌ 复制失败，请手动复制', 'error');
+          showToast('暂无可用设备');
         }
-      } catch (err) {
-        showStatus('❌ 复制失败，请手动复制', 'error');
+      } catch (error) {
+        console.error('扫描设备失败:', error);
+        showToast('扫描设备失败');
       }
     }
 
-    // 显示状态
-    function showStatus(message, type) {
-      const status = document.getElementById('status');
-      status.innerHTML = message;
-      status.className = 'status show ' + type;
-    }
+    // 更新设备列表
+    function updateDeviceList(devices) {
+      const deviceList = document.getElementById('device-list');
 
-    // 文件选择
-    document.getElementById('file-input').addEventListener('change', function(e) {
-      const files = Array.from(e.target.files);
-      files.forEach(file => sendFile(file));
-      this.value = ''; // 清空，允许重复选择
-    });
-
-    // 拖拽上传
-    const fileArea = document.getElementById('file-area');
-
-    fileArea.addEventListener('dragover', function(e) {
-      e.preventDefault();
-      if (conn && conn.open === true) {
-        fileArea.classList.add('dragover');
-      }
-    });
-
-    fileArea.addEventListener('dragleave', function(e) {
-      e.preventDefault();
-      fileArea.classList.remove('dragover');
-    });
-
-    fileArea.addEventListener('drop', function(e) {
-      e.preventDefault();
-      fileArea.classList.remove('dragover');
-
-      if (!conn || conn.open !== true) {
-        alert('请先建立连接');
+      if (devices.length === 0) {
+        deviceList.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+            </svg>
+            <h3>暂无连接设备</h3>
+            <p>点击上方按钮开始连接</p>
+          </div>
+        `;
         return;
       }
 
-      const files = Array.from(e.dataTransfer.files);
-      files.forEach(file => sendFile(file));
-    });
+      deviceList.innerHTML = devices.map(device => `
+        <div class="device-item ${currentChatDeviceId === device.id ? 'active' : ''} ${connectedDevices[device.id] ? 'connected' : ''}"
+             onclick="selectDevice('${device.id}')">
+          <div class="device-name">设备 ${device.id.substring(0, 8)}</div>
+          <div class="device-status">
+            <span class="status-dot ${connectedDevices[device.id] ? 'online' : ''}"></span>
+            ${connectedDevices[device.id] ? '已连接' : '未连接'}
+          </div>
+          ${connectedDevices[device.id] ? `
+            <div class="device-actions">
+              <button class="device-action-btn" onclick="event.stopPropagation(); chatWith('${device.id}')">聊天</button>
+              <button class="device-action-btn disconnect" onclick="event.stopPropagation(); disconnectDevice('${device.id}')">断开</button>
+            </div>
+          ` : `
+            <div class="device-actions">
+              <button class="device-action-btn" onclick="event.stopPropagation(); connectToDevice('${device.id}')">连接</button>
+            </div>
+          `}
+        </div>
+      `).join('');
+    }
 
-    // 初始禁用文件上传区域
-    document.getElementById('file-area').classList.add('disabled');
+    // 选择设备
+    function selectDevice(deviceId) {
+      currentChatDeviceId = deviceId;
+      document.getElementById('current-chat-title').textContent = `设备 ${deviceId.substring(0, 8)}`;
+      updateDeviceList(Object.keys(connectedDevices).map(id => ({
+        id,
+        connected: true
+      })));
+    }
 
-    // ========== 聊天功能 ==========
+    // 连接到设备
+    function connectToDevice(deviceId) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        showToast('请先连接服务器');
+        return;
+      }
+
+      ws.send(JSON.stringify({
+        type: 'connect_to_receiver',
+        receiverId: deviceId
+      }));
+
+      showToast('正在请求连接...');
+    }
+
+    // 处理连接请求
+    function handleConnectionRequest(senderId) {
+      if (confirm(`设备 ${senderId.substring(0, 8)} 请求连接,是否接受?`)) {
+        acceptConnection(senderId);
+      }
+    }
+
+    // 接受连接
+    function acceptConnection(senderId) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        return;
+      }
+
+      ws.send(JSON.stringify({
+        type: 'accept_connection',
+        senderId: senderId
+      }));
+    }
+
+    // 处理连接被接受
+    function handleConnectionAccepted(receiverId) {
+      connectedDevices[receiverId] = {
+        id: receiverId,
+        connectedAt: new Date().toISOString()
+      };
+
+      showToast('连接成功!');
+      updateDeviceList(Object.keys(connectedDevices).map(id => ({
+        id,
+        connected: true
+      })));
+
+      if (!currentChatDeviceId) {
+        selectDevice(receiverId);
+      }
+    }
+
+    // 处理连接建立
+    function handleConnectionEstablished(senderId) {
+      connectedDevices[senderId] = {
+        id: senderId,
+        connectedAt: new Date().toISOString()
+      };
+
+      showToast('连接成功!');
+      updateDeviceList(Object.keys(connectedDevices).map(id => ({
+        id,
+        connected: true
+      })));
+
+      if (!currentChatDeviceId) {
+        selectDevice(senderId);
+      }
+    }
+
+    // 断开设备
+    function disconnectDevice(deviceId) {
+      if (confirm(`确定要断开与设备 ${deviceId.substring(0, 8)} 的连接吗?`)) {
+        delete connectedDevices[deviceId];
+
+        if (currentChatDeviceId === deviceId) {
+          currentChatDeviceId = null;
+          document.getElementById('current-chat-title').textContent = '选择一个设备开始聊天';
+        }
+
+        showToast('已断开连接');
+        updateDeviceList(Object.keys(connectedDevices).map(id => ({
+          id,
+          connected: true
+        })));
+      }
+    }
+
+    // 处理对等方断开
+    function handlePeerDisconnected(disconnectedId) {
+      if (connectedDevices[disconnectedId]) {
+        delete connectedDevices[disconnectedId];
+
+        if (currentChatDeviceId === disconnectedId) {
+          currentChatDeviceId = null;
+          document.getElementById('current-chat-title').textContent = '选择一个设备开始聊天';
+        }
+
+        showToast(`设备 ${disconnectedId.substring(0, 8)} 已断开连接`);
+        updateDeviceList(Object.keys(connectedDevices).map(id => ({
+          id,
+          connected: true
+        })));
+      }
+    }
 
     // 发送消息
     function sendMessage() {
-      const input = document.getElementById('chat-input');
-      const message = input.value.trim();
+      const messageInput = document.getElementById('message-input');
+      const message = messageInput.value.trim();
 
-      if (!message) return;
-
-      if (!conn || conn.open !== true) {
-        alert('请先建立连接');
+      if (!message) {
+        showToast('请输入消息内容');
         return;
       }
 
-      // 发送消息
-      conn.send({
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        showToast('请先连接服务器');
+        return;
+      }
+
+      const target = sendToAll && Object.keys(connectedDevices).length > 1 ? 'all' : currentChatDeviceId;
+
+      if (!target && !sendToAll) {
+        showToast('请先选择一个设备');
+        return;
+      }
+
+      if (sendToAll && Object.keys(connectedDevices).length === 0) {
+        showToast('请先连接设备');
+        return;
+      }
+
+      const messageData = {
         type: 'message',
-        message: message,
-        sender: myNickname,
-        timestamp: Date.now()
-      });
+        content: message,
+        from: clientId,
+        to: target,
+        fromNickname: myNickname,
+        timestamp: new Date().toISOString()
+      };
 
-      // 显示发送的消息
-      addChatMessage(message, 'sent', myNickname);
-
-      // 清空输入框
-      input.value = '';
+      try {
+        ws.send(JSON.stringify(messageData));
+        messageInput.value = '';
+        addChatMessage(clientId, message, myNickname, true);
+      } catch (error) {
+        console.error('发送消息失败:', error);
+        showToast('发送消息失败');
+      }
     }
 
-    // 添加聊天消息到显示区域
-    function addChatMessage(message, type, sender) {
-      const chatMessages = document.getElementById('chat-messages');
+    // 添加聊天消息
+    function addChatMessage(fromId, content, nickname, isSent) {
+      const messagesContainer = document.getElementById('messages');
+
+      // 移除空状态
+      const emptyState = messagesContainer.querySelector('.empty-state');
+      if (emptyState) {
+        emptyState.remove();
+      }
+
       const messageDiv = document.createElement('div');
-      messageDiv.className = 'chat-message ' + type;
-
-      const time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-
+      messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
       messageDiv.innerHTML = `
-        ${type === 'received' ? `<div class="sender">${sender}</div>` : ''}
-        <div class="content">${escapeHtml(message)}</div>
-        <div class="time">${time}</div>
+        <div class="message-content">
+          ${!isSent ? `<div class="message-sender">${escapeHtml(nickname)}</div>` : ''}
+          <div class="message-text">${escapeHtml(content)}</div>
+          <div class="message-time">${new Date().toLocaleTimeString()}</div>
+        </div>
       `;
 
-      chatMessages.appendChild(messageDiv);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+      messagesContainer.appendChild(messageDiv);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    // 转义 HTML 防止 XSS
+    // HTML转义
     function escapeHtml(text) {
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
     }
 
-    // ========== 麦克风喊话功能 ==========
+    // 处理键盘事件
+    function handleKeyPress(event) {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    }
 
-    // 切换麦克风
+    // 切换发送到全部设备
+    function toggleSendAll() {
+      sendToAll = !sendToAll;
+      const btn = document.getElementById('send-all-btn');
+      btn.textContent = sendToAll ? '✓ 发送到全部' : '发送到全部';
+      btn.style.background = sendToAll ? '#ffc107' : '#28a745';
+      btn.style.color = sendToAll ? '#000' : '#fff';
+    }
+
+    // 切换侧边栏
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('open');
+    }
+
+    // 显示二维码
+    async function showQRCode() {
+      try {
+        const response = await fetch('/api/qrcode');
+        const data = await response.json();
+
+        const qrModal = document.getElementById('qr-modal');
+        const qrCodeDiv = document.getElementById('qr-code');
+
+        qrCodeDiv.innerHTML = '';
+        QRCode.toCanvas(qrCodeDiv, data.connectionUrl, {
+          width: 300,
+          margin: 2
+        });
+
+        qrModal.classList.add('active');
+      } catch (error) {
+        console.error('生成二维码失败:', error);
+        showToast('生成二维码失败');
+      }
+    }
+
+    // 关闭二维码弹窗
+    function closeQRModal() {
+      document.getElementById('qr-modal').classList.remove('active');
+    }
+
+    // 麦克风功能
     async function toggleMicrophone() {
-      const btn = document.getElementById('mic-toggle-btn');
-      const icon = document.getElementById('mic-btn-icon');
-      const text = document.getElementById('mic-btn-text');
-      const micStatus = document.getElementById('mic-status');
-
-      if (isMicEnabled) {
-        // 关闭麦克风
-        stopMicrophone();
-        btn.className = 'mic-btn idle';
-        icon.textContent = '🎙️';
-        text.textContent = '开启麦克风';
-        micStatus.style.display = 'none';
-        showStatus('📴 麦克风已关闭', 'connected');
-      } else {
-        // 开启麦克风
+      if (!microphoneEnabled) {
         try {
-          showStatus('⏳ 正在请求麦克风权限...', 'connecting');
-
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-          audioContext = new (window.AudioContext || window.webkitAudioContext)();
-          const source = audioContext.createMediaStreamSource(stream);
-          analyser = audioContext.createAnalyser();
-          analyser.fftSize = 256;
-          source.connect(analyser);
-
-          mediaRecorder = new MediaRecorder(stream);
-
-          mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0 && conn && conn.open === true) {
-              conn.send({
-                type: 'audio',
-                audioData: event.data
-              });
-            }
-          };
-
-          mediaRecorder.start(100); // 每100ms发送一次
-
-          isMicEnabled = true;
-          btn.className = 'mic-btn active';
-          icon.textContent = '🔴';
-          text.textContent = '停止麦克风';
-
-          micStatus.innerHTML = '🎙️ 麦克风已开启，正在实时传送声音...';
-          micStatus.className = 'status show recording';
-          micStatus.style.display = 'block';
-
-          showStatus('✅ 麦克风已开启，对方可以听到你的声音', 'connected');
-
+          await requestMicrophonePermission();
         } catch (error) {
-          console.error('无法访问麦克风:', error);
-          alert('无法访问麦克风，请检查权限设置');
-          micStatus.innerHTML = '❌ 无法访问麦克风';
-          micStatus.className = 'status show error';
-          micStatus.style.display = 'block';
+          console.error('启用麦克风失败:', error);
+          showToast('无法启用麦克风');
         }
+      } else {
+        stopMicrophone();
+      }
+    }
+
+    // 请求麦克风权限
+    async function requestMicrophonePermission() {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+
+        mediaRecorder = new MediaRecorder(localStream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunks.push(event.data);
+
+            // 发送音频数据
+            if (audioChunks.length >= 5) {
+              const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+              sendAudioData(audioBlob);
+              audioChunks = [];
+            }
+          }
+        };
+
+        mediaRecorder.start(100);
+
+        microphoneEnabled = true;
+        document.getElementById('mic-btn').classList.add('active');
+        showToast('麦克风已启用');
+
+      } catch (error) {
+        console.error('请求麦克风权限失败:', error);
+        showToast('无法获取麦克风权限');
+        throw error;
       }
     }
 
@@ -1690,239 +1474,406 @@
         mediaRecorder.stop();
       }
 
-      if (mediaRecorder && mediaRecorder.stream) {
-        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
       }
 
-      if (audioContext) {
-        audioContext.close();
-      }
-
-      mediaRecorder = null;
-      audioContext = null;
-      analyser = null;
-      isMicEnabled = false;
+      microphoneEnabled = false;
+      audioChunks = [];
+      document.getElementById('mic-btn').classList.remove('active');
+      showToast('麦克风已关闭');
     }
 
-    // 切换静音
-    function toggleMute() {
-      if (!isMicEnabled) {
-        alert('请先开启麦克风');
+    // 发送音频数据
+    async function sendAudioData(audioBlob) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
         return;
       }
 
-      isMuted = !isMuted;
-      const btn = document.getElementById('mute-btn');
+      const arrayBuffer = await audioBlob.arrayBuffer();
+      const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
-      if (isMuted) {
-        btn.textContent = '🔊 取消静音';
-        btn.style.background = 'linear-gradient(135deg, #ffc107 0%, #e0a800 100%)';
-        showStatus('🔇 已静音', 'connected');
-      } else {
-        btn.textContent = '🔇 静音';
-        btn.style.background = '';
-        showStatus('🔊 已取消静音', 'connected');
+      const target = sendToAll && Object.keys(connectedDevices).length > 1 ? 'all' : currentChatDeviceId;
+
+      if (target) {
+        ws.send(JSON.stringify({
+          type: 'audio',
+          audio: base64Audio,
+          from: clientId,
+          to: target,
+          fromNickname: myNickname,
+          timestamp: new Date().toISOString()
+        }));
       }
     }
 
-    // 处理接收到的音频
-    function handleAudio(audioData) {
-      const audioBlob = new Blob([audioData], { type: 'audio/webm' });
-      const audioUrl = URL.createObjectURL(audioBlob);
-
-      if (mediaElement) {
-        mediaElement.pause();
-      }
-
-      mediaElement = new Audio(audioUrl);
-      mediaElement.play().catch(e => console.error('播放失败:', e));
-
-      // 释放 URL
-      setTimeout(() => {
-        URL.revokeObjectURL(audioUrl);
-      }, 1000);
-    }
-
-    // ========== 通话功能 ==========
-
-    // 开始语音通话
-    async function startVoiceCall() {
-      if (isInCall) {
-        alert('已在通话中');
-        return;
-      }
-
-      if (!conn || conn.open !== true) {
-        alert('请先建立连接');
-        return;
-      }
-
+    // 处理音频数据
+    function handleAudioData(data) {
       try {
-        showCallStatus('⏳ 正在发起语音通话...', 'connecting');
+        const audioBytes = atob(data.audio);
+        const audioArray = new Uint8Array(audioBytes.length);
+        for (let i = 0; i < audioBytes.length; i++) {
+          audioArray[i] = audioBytes.charCodeAt(i);
+        }
 
-        // 获取本地音频流
-        localStream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: false
-        });
+        const audioBlob = new Blob([audioArray], { type: 'audio/webm' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        audio.play();
 
-        // 发起呼叫请求
-        conn.send({
-          type: 'call',
-          callType: 'voice',
-          peerId: peer.id
-        });
-
-        updateCallUI(true);
+        addChatMessage(data.from, '🎤 语音消息', data.fromNickname, false);
       } catch (error) {
-        console.error('获取音频失败:', error);
-        alert('无法访问麦克风,请检查权限设置');
-        hideCallStatus();
+        console.error('播放音频失败:', error);
       }
     }
 
-    // 开始视频通话
-    async function startVideoCall() {
-      if (isInCall) {
-        alert('已在通话中');
+    // 显示文件输入
+    function showFileInput() {
+      document.getElementById('file-input').click();
+    }
+
+    // 处理文件选择
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        sendFile(file);
+      }
+      event.target.value = '';
+    }
+
+    // 发送文件
+    function sendFile(file) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        showToast('请先连接服务器');
         return;
       }
 
-      if (!conn || conn.open !== true) {
-        alert('请先建立连接');
+      const target = sendToAll && Object.keys(connectedDevices).length > 1 ? 'all' : currentChatDeviceId;
+
+      if (!target && !sendToAll) {
+        showToast('请先选择一个设备');
         return;
       }
 
+      if (sendToAll && Object.keys(connectedDevices).length === 0) {
+        showToast('请先连接设备');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('senderId', clientId);
+      formData.append('receiverId', target);
+
+      fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            addChatMessage(clientId, `📄 已发送文件: ${file.name}`, myNickname, true);
+            showToast('文件发送成功');
+          } else {
+            showToast('文件发送失败');
+          }
+        })
+        .catch(error => {
+          console.error('文件发送失败:', error);
+          showToast('文件发送失败');
+        });
+    }
+
+    // 视频通话
+    function startVideoCall() {
+      if (!currentChatDeviceId) {
+        showToast('请先选择一个设备');
+        return;
+      }
+
+      if (!connectedDevices[currentChatDeviceId]) {
+        showToast('请先连接该设备');
+        return;
+      }
+
+      initiateCall('video');
+    }
+
+    // 语音通话
+    function startAudioCall() {
+      if (!currentChatDeviceId) {
+        showToast('请先选择一个设备');
+        return;
+      }
+
+      if (!connectedDevices[currentChatDeviceId]) {
+        showToast('请先连接该设备');
+        return;
+      }
+
+      initiateCall('audio');
+    }
+
+    // 发起通话
+    async function initiateCall(type) {
       try {
-        showCallStatus('⏳ 正在发起视频通话...', 'connecting');
-
-        // 获取本地音视频流
-        localStream = await navigator.mediaDevices.getUserMedia({
+        const constraints = {
           audio: true,
-          video: true
+          video: type === 'video'
+        };
+
+        localStream = await navigator.mediaDevices.getUserMedia(constraints);
+        document.getElementById('local-video').srcObject = localStream;
+
+        peerConnection = new RTCPeerConnection(config);
+
+        localStream.getTracks().forEach(track => {
+          peerConnection.addTrack(track, localStream);
         });
 
-        // 显示本地视频
-        const localVideo = document.getElementById('local-video');
-        localVideo.srcObject = localStream;
-        document.getElementById('video-wrapper').style.display = 'block';
+        peerConnection.ontrack = (event) => {
+          document.getElementById('remote-video').srcObject = event.streams[0];
+        };
 
-        // 发起呼叫请求
-        conn.send({
-          type: 'call',
-          callType: 'video',
-          peerId: peer.id
-        });
+        peerConnection.onicecandidate = (event) => {
+          if (event.candidate) {
+            ws.send(JSON.stringify({
+              type: 'webrtc_ice_candidate',
+              candidate: event.candidate,
+              to: currentChatDeviceId,
+              from: clientId
+            }));
+          }
+        };
 
-        updateCallUI(true);
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        ws.send(JSON.stringify({
+          type: 'webrtc_offer',
+          offer: offer,
+          to: currentChatDeviceId,
+          from: clientId,
+          callType: type
+        }));
+
+        document.getElementById('call-screen').classList.add('active');
+
       } catch (error) {
-        console.error('获取音视频失败:', error);
-        alert('无法访问摄像头或麦克风,请检查权限设置');
-        hideCallStatus();
+        console.error('发起通话失败:', error);
+        showToast('无法发起通话');
       }
     }
 
     // 处理来电
     function handleIncomingCall(data) {
-      const callType = data.callType;
-      const typeText = callType === 'video' ? '视频通话' : '语音通话';
-
-      if (confirm(`对方发起了${typeText},是否接听?`)) {
-        acceptCall(callType);
-      } else {
-        rejectCall();
-      }
+      callIncoming = data;
+      document.getElementById('call-popup-title').textContent =
+        data.callType === 'video' ? '视频来电' : '语音来电';
+      document.getElementById('call-popup-info').textContent =
+        `设备 ${data.from.substring(0, 8)} 请求通话`;
+      document.getElementById('call-popup').classList.add('active');
     }
 
-    // 接听通话
-    async function acceptCall(callType) {
-      try {
-        showCallStatus('⏳ 正在建立通话...', 'connecting');
+    // 接受通话
+    async function acceptCall() {
+      document.getElementById('call-popup').classList.remove('active');
 
-        // 获取本地音视频流
-        const constraints = callType === 'video'
-          ? { audio: true, video: true }
-          : { audio: true, video: false };
+      try {
+        const constraints = {
+          audio: true,
+          video: callIncoming.callType === 'video'
+        };
 
         localStream = await navigator.mediaDevices.getUserMedia(constraints);
+        document.getElementById('local-video').srcObject = localStream;
 
-        // 如果是视频通话,显示本地视频
-        if (callType === 'video') {
-          const localVideo = document.getElementById('local-video');
-          localVideo.srcObject = localStream;
-          document.getElementById('video-wrapper').style.display = 'block';
-        }
+        peerConnection = new RTCPeerConnection(config);
 
-        // 发送接受通话的消息
-        conn.send({
-          type: 'call-answer',
-          accepted: true
+        localStream.getTracks().forEach(track => {
+          peerConnection.addTrack(track, localStream);
         });
 
-        isInCall = true;
-        updateCallUI(true);
-        showCallStatus('📞 通话中...', 'connected');
+        peerConnection.ontrack = (event) => {
+          document.getElementById('remote-video').srcObject = event.streams[0];
+        };
+
+        peerConnection.onicecandidate = (event) => {
+          if (event.candidate) {
+            ws.send(JSON.stringify({
+              type: 'webrtc_ice_candidate',
+              candidate: event.candidate,
+              to: callIncoming.from,
+              from: clientId
+            }));
+          }
+        };
+
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(callIncoming.offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+
+        ws.send(JSON.stringify({
+          type: 'webrtc_answer',
+          answer: answer,
+          to: callIncoming.from,
+          from: clientId
+        }));
+
+        document.getElementById('call-screen').classList.add('active');
+
       } catch (error) {
-        console.error('接听失败:', error);
-        alert('接听失败,请检查权限设置');
-        hideCallStatus();
+        console.error('接受通话失败:', error);
+        showToast('无法接受通话');
       }
     }
 
     // 拒绝通话
     function rejectCall() {
-      conn.send({
-        type: 'call-answer',
-        accepted: false
-      });
-      showCallStatus('❌ 已拒绝通话', 'ended');
-      setTimeout(hideCallStatus, 2000);
-    }
+      document.getElementById('call-popup').classList.remove('active');
 
-    // 处理通话应答
-    function handleCallAnswer(data) {
-      if (data.accepted) {
-        isInCall = true;
-        showCallStatus('📞 通话已接通', 'connected');
-      } else {
-        showCallStatus('❌ 对方拒绝了通话', 'ended');
-        setTimeout(() => {
-          hideCallStatus();
-          cleanupCall();
-        }, 2000);
+      if (callIncoming) {
+        ws.send(JSON.stringify({
+          type: 'call_rejected',
+          to: callIncoming.from,
+          from: clientId
+        }));
+        callIncoming = null;
       }
     }
 
-    // 处理通话拒绝
-    function handleCallReject() {
-      showCallStatus('❌ 对方拒绝了通话', 'ended');
-      setTimeout(() => {
-        hideCallStatus();
-        cleanupCall();
-      }, 2000);
+    // 处理WebRTC Offer
+    async function handleWebRTCOffer(data) {
+      try {
+        peerConnection = new RTCPeerConnection(config);
+
+        peerConnection.ontrack = (event) => {
+          document.getElementById('remote-video').srcObject = event.streams[0];
+        };
+
+        peerConnection.onicecandidate = (event) => {
+          if (event.candidate) {
+            ws.send(JSON.stringify({
+              type: 'webrtc_ice_candidate',
+              candidate: event.candidate,
+              to: data.from,
+              from: clientId
+            }));
+          }
+        };
+
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+
+        ws.send(JSON.stringify({
+          type: 'webrtc_answer',
+          answer: answer,
+          to: data.from,
+          from: clientId
+        }));
+
+      } catch (error) {
+        console.error('处理WebRTC Offer失败:', error);
+      }
     }
 
-    // 结束通话
-    function endCall() {
-      if (conn && conn.open === true) {
-        conn.send({ type: 'call-end' });
+    // 处理WebRTC Answer
+    async function handleWebRTCAnswer(data) {
+      if (peerConnection) {
+        try {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+        } catch (error) {
+          console.error('处理WebRTC Answer失败:', error);
+        }
+      }
+    }
+
+    // 处理WebRTC ICE Candidate
+    async function handleWebRTCIceCandidate(data) {
+      if (peerConnection) {
+        try {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } catch (error) {
+          console.error('添加ICE候选失败:', error);
+        }
+      }
+    }
+
+    // 静音/取消静音
+    function toggleMute() {
+      if (localStream) {
+        const audioTrack = localStream.getAudioTracks()[0];
+        if (audioTrack) {
+          isMuted = !isMuted;
+          audioTrack.enabled = !isMuted;
+          const btn = document.getElementById('mute-btn');
+          btn.classList.toggle('active', isMuted);
+          btn.textContent = isMuted ? '🔇 取消静音' : '🔊 静音';
+        }
+      }
+    }
+
+    // 开关摄像头
+    function toggleCamera() {
+      if (localStream) {
+        const videoTrack = localStream.getVideoTracks()[0];
+        if (videoTrack) {
+          isCameraOff = !isCameraOff;
+          videoTrack.enabled = !isCameraOff;
+          const btn = document.getElementById('camera-btn');
+          btn.classList.toggle('active', isCameraOff);
+          btn.textContent = isCameraOff ? '📷 开启摄像头' : '📷 关闭摄像头';
+        }
+      }
+    }
+
+    // 挂断通话
+    function hangupCall() {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
       }
 
-      showCallStatus('📵 通话已结束', 'ended');
+      if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+      }
 
-      setTimeout(() => {
-        hideCallStatus();
-        cleanupCall();
-      }, 1500);
+      document.getElementById('call-screen').classList.remove('active');
+      document.getElementById('call-popup').classList.remove('active');
+
+      if (currentChatDeviceId) {
+        ws.send(JSON.stringify({
+          type: 'call_ended',
+          to: currentChatDeviceId,
+          from: clientId
+        }));
+      }
+
+      isMuted = false;
+      isCameraOff = false;
+    }
+
+    // 处理通话被接受
+    function handleCallAccepted(data) {
+      document.getElementById('call-screen').classList.add('active');
+    }
+
+    // 处理通话被拒绝
+    function handleCallRejected(data) {
+      document.getElementById('call-screen').classList.remove('active');
+      showToast('对方拒绝了通话请求');
+      cleanupCall();
     }
 
     // 处理通话结束
-    function handleCallEnd() {
-      showCallStatus('📵 对方已结束通话', 'ended');
-      setTimeout(() => {
-        hideCallStatus();
-        cleanupCall();
-      }, 1500);
+    function handleCallEnded() {
+      document.getElementById('call-screen').classList.remove('active');
+      document.getElementById('call-popup').classList.remove('active');
+      showToast('通话已结束');
+      cleanupCall();
     }
 
     // 清理通话资源
@@ -1932,252 +1883,81 @@
         localStream = null;
       }
 
-      // 清理所有远程流
-      for (const peerId in remoteStreams) {
-        if (remoteStreams[peerId]) {
-          remoteStreams[peerId].getTracks().forEach(track => track.stop());
-        }
-      }
-      remoteStreams = {};
-
-      const localVideo = document.getElementById('local-video');
-      const remoteVideosGrid = document.getElementById('remote-videos-grid');
-
-      if (localVideo) {
-        localVideo.srcObject = null;
+      if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
       }
 
-      if (remoteVideosGrid) {
-        remoteVideosGrid.innerHTML = '';
-      }
+      document.getElementById('local-video').srcObject = null;
+      document.getElementById('remote-video').srcObject = null;
+      document.getElementById('call-screen').classList.remove('active');
+      document.getElementById('call-popup').classList.remove('active');
 
-      document.getElementById('video-wrapper').style.display = 'none';
-
-      isInCall = false;
-      updateCallUI(false);
+      isMuted = false;
+      isCameraOff = false;
+      callIncoming = null;
     }
 
-    // 更新通话UI
-    function updateCallUI(inCall) {
-      const voiceCallBtn = document.getElementById('voice-call-btn');
-      const videoCallBtn = document.getElementById('video-call-btn');
-      const endCallBtn = document.getElementById('end-call-btn');
+    // 显示提示信息
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);
 
-      if (inCall) {
-        voiceCallBtn.style.display = 'none';
-        videoCallBtn.style.display = 'none';
-        endCallBtn.style.display = 'inline-flex';
-      } else {
-        voiceCallBtn.style.display = 'inline-flex';
-        videoCallBtn.style.display = 'inline-flex';
-        endCallBtn.style.display = 'none';
-      }
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
     }
 
-    // 显示通话状态
-    function showCallStatus(message, status) {
-      const callStatus = document.getElementById('call-status');
-      const callStatusText = document.getElementById('call-status-text');
+    // 拖放文件功能
+    const dropZone = document.getElementById('drop-zone');
 
-      callStatusText.textContent = message;
-      callStatus.className = 'call-status show ' + status;
-      callStatus.style.display = 'block';
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
 
-    // 隐藏通话状态
-    function hideCallStatus() {
-      const callStatus = document.getElementById('call-status');
-      callStatus.style.display = 'none';
-    }
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, () => {
+        dropZone.classList.add('active', 'dragover');
+      }, false);
+    });
 
-    // ========== 自动连接功能 ==========
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, () => {
+        dropZone.classList.remove('dragover');
+      }, false);
+    });
 
-    // 设置昵称
-    function setNickname() {
-      const nicknameInput = document.getElementById('nickname-input');
-      const nickname = nicknameInput.value.trim();
-
-      if (!nickname) {
-        alert('请输入昵称');
-        return;
+    dropZone.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        dropZone.classList.remove('active');
+        sendFile(files[0]);
       }
+    }, false);
 
-      myNickname = nickname;
-      localStorage.setItem('p2p_nickname', nickname);
-      document.title = `🌍 ${nickname} - 跨地域 P2P 文件传输`;
+    // 页面加载时检查本地存储
+    window.addEventListener('load', () => {
+      const savedNickname = localStorage.getItem('nickname');
+      const savedDeviceType = localStorage.getItem('deviceType');
 
-      showStatus('✅ 昵称已设置为: ' + nickname, 'connected');
-    }
-
-    // 加载保存的昵称
-    function loadSavedNickname() {
-      const savedNickname = localStorage.getItem('p2p_nickname');
-      if (savedNickname) {
-        myNickname = savedNickname;
-        const nicknameInput = document.getElementById('nickname-input');
-        if (nicknameInput) {
-          nicknameInput.value = savedNickname;
-        }
-        document.title = `🌍 ${savedNickname} - 跨地域 P2P 文件传输`;
+      if (savedNickname && savedDeviceType) {
+        document.getElementById('nickname').value = savedNickname;
+        document.getElementById('device-type').value = savedDeviceType;
       }
-    }
+    });
 
-    // 加载自动连接设置
-    function loadAutoConnectSettings() {
-      const savedAutoConnect = localStorage.getItem('p2p_auto_connect');
-      const savedFrequentDevices = localStorage.getItem('p2p_frequent_devices');
-
-      if (savedAutoConnect === 'true') {
-        autoConnectEnabled = true;
-        const checkbox = document.getElementById('auto-connect-checkbox');
-        if (checkbox) {
-          checkbox.checked = true;
-        }
-        document.getElementById('auto-connect-info').style.display = 'block';
-      }
-
-      if (savedFrequentDevices) {
-        try {
-          frequentDevices = JSON.parse(savedFrequentDevices);
-          // 清理过期的记录
-          const now = Date.now();
-          const cleaned = {};
-          for (const peerId in frequentDevices) {
-            if (now - frequentDevices[peerId].lastConnect < AUTO_CONNECT_EXPIRY) {
-              cleaned[peerId] = frequentDevices[peerId];
-            }
-          }
-          frequentDevices = cleaned;
-          saveFrequentDevices();
-        } catch (e) {
-          console.error('加载频繁设备记录失败:', e);
-          frequentDevices = {};
-        }
-      }
-
-      // 检查是否需要自动连接
-      if (autoConnectEnabled) {
-        checkAndAutoConnect();
-      }
-    }
-
-    // 切换自动连接
-    function toggleAutoConnect() {
-      const checkbox = document.getElementById('auto-connect-checkbox');
-      autoConnectEnabled = checkbox.checked;
-
-      localStorage.setItem('p2p_auto_connect', autoConnectEnabled.toString());
-
-      if (autoConnectEnabled) {
-        document.getElementById('auto-connect-info').style.display = 'block';
-        showStatus('✅ 自动连接已启用', 'connected');
-      } else {
-        document.getElementById('auto-connect-info').style.display = 'none';
-        showStatus('📴 自动连接已关闭', 'connected');
-      }
-    }
-
-    // 记录连接
-    function recordConnection(peerId) {
-      if (!autoConnectEnabled) return;
-
-      if (!frequentDevices[peerId]) {
-        frequentDevices[peerId] = {
-          count: 0,
-          lastConnect: 0,
-          mode: mode
-        };
-      }
-
-      frequentDevices[peerId].count++;
-      frequentDevices[peerId].lastConnect = Date.now();
-      frequentDevices[peerId].mode = mode;
-
-      saveFrequentDevices();
-
-      // 检查是否达到阈值
-      if (frequentDevices[peerId].count >= AUTO_CONNECT_THRESHOLD) {
-        showStatus('🎉 检测到频繁连接!下次访问将自动连接', 'connected');
-      }
-    }
-
-    // 保存频繁设备记录
-    function saveFrequentDevices() {
-      localStorage.setItem('p2p_frequent_devices', JSON.stringify(frequentDevices));
-    }
-
-    // 检查并自动连接
-    function checkAndAutoConnect() {
-      // 找出连接次数最多的设备
-      let maxPeerId = null;
-      let maxCount = 0;
-
-      for (const peerId in frequentDevices) {
-        if (frequentDevices[peerId].count >= AUTO_CONNECT_THRESHOLD) {
-          if (frequentDevices[peerId].count > maxCount) {
-            maxCount = frequentDevices[peerId].count;
-            maxPeerId = peerId;
-          }
-        }
-      }
-
-      if (!maxPeerId) return;
-
-      // 询问用户是否自动连接
-      const deviceMode = frequentDevices[maxPeerId].mode;
-      const modeText = deviceMode === 'sender' ? '发送端' : (deviceMode === 'receiver' ? '接收端' : '多人模式');
-
-      if (confirm(`检测到您经常与设备 ${maxPeerId} 连接(${maxCount}次)\n是否自动选择${modeText}并尝试连接?`)) {
-        // 自动选择模式
-        selectMode(deviceMode);
-
-        // 等待Peer初始化完成后自动连接
-        const autoConnectInterval = setInterval(() => {
-          if (peer && peer.id) {
-            clearInterval(autoConnectInterval);
-
-            document.getElementById('remote-id').value = maxPeerId;
-
-            setTimeout(() => {
-              connect();
-              showStatus('🚀 正在自动连接...', 'connecting');
-            }, 500);
-          }
-        }, 100);
-
-        // 超时清除
-        setTimeout(() => {
-          clearInterval(autoConnectInterval);
-        }, 10000);
-      }
-    }
-
-    // 修改连接函数,记录连接
-    const originalConnect = connect;
-    window.connect = function() {
-      const result = originalConnect.apply(this, arguments);
-
-      // 记录连接(如果是主动连接)
-      const remoteId = document.getElementById('remote-id').value.trim();
-      if (remoteId) {
-        recordConnection(remoteId);
-      }
-
-      return result;
-    };
-
-    // 修改setupConnection,记录被动连接
-    const originalSetupConnection = setupConnection;
-    window.setupConnection = function(connection) {
-      const result = originalSetupConnection.apply(this, arguments);
-
-      // 记录连接(如果是被动连接)
-      if (connection && connection.peer) {
-        recordConnection(connection.peer);
-      }
-
-      return result;
-    };
+    // 页面关闭时清理
+    window.addEventListener('beforeunload', () => {
+      stopMicrophone();
+      cleanupCall();
+    });
   </script>
 </body>
 </html>

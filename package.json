@@ -42,16 +42,19 @@
   },
   "build": {
     "appId": "com.p2p.communication",
-    "productName": "P2P实时通信",
+    "productName": "P2P跨平台文件传输",
     "directories": {
-      "output": "dist"
+      "output": "release"
     },
     "win": {
       "target": "nsis"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "P2P跨平台文件传输"
     }
   }
 }

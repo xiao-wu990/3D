@@ -46,19 +46,81 @@ npm start
 
 ### Windows 版本
 
-需要手动创建 `main.js` 文件（内容见下方 Windows 构建指南），然后：
+**重要：移除了默认开发者模式！**
+
+现在应用默认不会打开开发者工具，只在使用 `--dev` 参数时才会打开。
+
+**生产模式运行（推荐）**：
+```bash
+npm run electron
+# 或
+node node_modules/electron/cli.js .
+```
+
+**开发模式运行（带开发者工具）**：
+```bash
+npm run electron-dev
+# 或
+node node_modules/electron/cli.js . --dev
+```
+
+## 📦 Windows 桌面应用打包
+
+### 准备工作
+
+1. **创建 build 目录**
+   ```bash
+   mkdir build
+   ```
+
+2. **准备应用图标**
+   - 准备一个 256x256 像素的 PNG 图标
+   - 使用在线工具转换为 ICO 格式：
+     - 访问 https://convertico.com/
+     - 上传 PNG 图标，下载 `icon.ico`
+     - 保存到 `build/icon.ico`
+
+3. **创建许可证文件（可选）**
+   ```bash
+   echo MIT License > build/LICENSE.txt
+   ```
+
+### 打包步骤
 
 ```bash
-# 安装 Electron
-npm install electron@latest --save-dev
-npm install electron-builder@latest --save-dev
-
-# 开发模式运行
-npm run electron-dev
-
-# 打包 Windows 应用
+# 打包 Windows 版本
 npm run build-win
+
+# 打包 Linux 版本
+npm run build-linux
+
+# 打包 Mac 版本
+npm run build-mac
 ```
+
+打包完成后，安装程序在 `dist` 目录，文件名：`P2P跨平台文件传输-2.0.0-x64.exe`
+
+### 安装程序特性
+
+✅ **美观的安装界面**
+- 专业的安装向导
+- 支持自定义安装路径
+- 创建桌面快捷方式
+- 创建开始菜单快捷方式
+- 安装完成后自动启动
+- 支持卸载
+- 自定义图标和品牌标识
+
+✅ **更新检测**
+- 应用启动时自动检查更新
+- 每2小时自动检查一次
+- 支持手动检查更新（Ctrl+U）
+- 显示更新通知和详细内容
+
+✅ **与网页版互通**
+- 从 GitHub Pages 加载最新版本
+- 支持离线模式（自动切换到本地文件）
+- 与网页版完全兼容
 
 ### Android 版本
 
